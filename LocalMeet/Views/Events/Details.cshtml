@@ -1,0 +1,13 @@
+﻿@model LocalMeet.Models.Event
+
+@if (Model != null && User.Identity != null && User.Identity.IsAuthenticated)
+{
+    <form asp-controller="Participation"
+          asp-action="Register"
+          method="post">
+        <input type="hidden" name="eventId" value="@Model.Id" />
+        <button type="submit" class="btn btn-success">
+            Я пойду
+        </button>
+    </form>
+}

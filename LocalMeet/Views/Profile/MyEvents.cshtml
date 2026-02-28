@@ -1,0 +1,41 @@
+﻿@model List<LocalMeet.Models.Event>
+
+<h2>Мои мероприятия</h2>
+
+@if (!Model.Any())
+{
+    <p>У вас пока нет мероприятий.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Дата</th>
+                <th>Локация</th>
+                <th>Статус</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ev in Model)
+            {
+                <tr>
+                    <td>@ev.Title</td>
+                    <td>@ev.Date.ToString("dd.MM.yyyy HH:mm")</td>
+                    <td>@ev.Location</td>
+                    <td>@ev.Status</td>
+                    <td>
+                        <a asp-controller="Events"
+                           asp-action="Details"
+                           asp-route-id="@ev.Id"
+                           class="btn btn-primary btn-sm">
+                            Подробнее
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

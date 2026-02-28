@@ -1,0 +1,44 @@
+﻿@model List<LocalMeet.Models.Event>
+
+<h2>Заявки на модерацию</h2>
+
+@if (!Model.Any())
+{
+    <p>Нет заявок на рассмотрении.</p>
+}
+else
+{
+    <table class="table mt-3">
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Дата</th>
+                <th>Создатель</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ev in Model)
+            {
+                <tr>
+                    <td>@ev.Title</td>
+                    <td>@ev.Date.ToString("dd.MM.yyyy HH:mm")</td>
+                    <td>@ev.Creator?.Email</td>
+                    <td>
+                        <a asp-action="Approve"
+                           asp-route-id="@ev.Id"
+                           class="btn btn-success btn-sm">
+                            Одобрить
+                        </a>
+
+                        <a asp-action="Reject"
+                           asp-route-id="@ev.Id"
+                           class="btn btn-danger btn-sm">
+                            Отклонить
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

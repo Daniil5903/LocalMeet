@@ -1,0 +1,39 @@
+﻿@model LocalMeet.ViewModels.AdminStatisticsViewModel
+
+<h2>Статистика системы</h2>
+
+<div class="row mt-4">
+
+    <div class="col-md-4 mb-3">
+        <div class="card p-3 shadow-sm">
+            <h5>Пользователи</h5>
+            <h3>@Model.UsersCount</h3>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card p-3 shadow-sm">
+            <h5>Всего мероприятий</h5>
+            <h3>@Model.EventsCount</h3>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card p-3 shadow-sm">
+            <h5>Регистрации</h5>
+            <h3>@Model.ParticipationsCount</h3>
+        </div>
+    </div>
+
+</div>
+
+<hr />
+
+<h4>Статусы мероприятий</h4>
+
+<ul class="list-group mt-3">
+    <li class="list-group-item">Одобрено: @Model.ApprovedEvents</li>
+    <li class="list-group-item">В рассмотрении: @Model.PendingEvents</li>
+    <li class="list-group-item">Отклонено: @Model.RejectedEvents</li>
+    <li class="list-group-item">Отменено: @Model.CancelledEvents</li>
+</ul>
