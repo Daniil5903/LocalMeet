@@ -1,0 +1,809 @@
+/* =========================================================
+   LocalMeet — единая светлая и тёмная тема
+   ========================================================= */
+
+:root,
+html[data-theme="light"] {
+    color-scheme: light;
+    --lm-bg: #f4f7fb;
+    --lm-bg-glow: rgba(37, 99, 235, 0.08);
+    --lm-surface: #ffffff;
+    --lm-surface-raised: #ffffff;
+    --lm-surface-soft: #f7f9fc;
+    --lm-surface-hover: #edf4ff;
+    --lm-input-bg: #ffffff;
+    --lm-text: #172033;
+    --lm-text-soft: #344054;
+    --lm-muted: #667085;
+    --lm-border: #dfe5ef;
+    --lm-border-strong: #c7d1e1;
+    --lm-primary: #2563eb;
+    --lm-primary-hover: #1d4ed8;
+    --lm-primary-soft: rgba(37, 99, 235, 0.11);
+    --lm-success: #16a34a;
+    --lm-danger: #dc2626;
+    --lm-warning: #d97706;
+    --lm-info: #0891b2;
+    --lm-success-soft: rgba(22, 163, 74, 0.11);
+    --lm-danger-soft: rgba(220, 38, 38, 0.10);
+    --lm-warning-soft: rgba(217, 119, 6, 0.12);
+    --lm-info-soft: rgba(8, 145, 178, 0.10);
+    --lm-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+    --lm-shadow-hover: 0 25px 65px rgba(37, 99, 235, 0.15);
+}
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+    --lm-bg: #080d18;
+    --lm-bg-glow: rgba(59, 130, 246, 0.11);
+    --lm-surface: #111827;
+    --lm-surface-raised: #162033;
+    --lm-surface-soft: #0d1524;
+    --lm-surface-hover: #1b2940;
+    --lm-input-bg: #0b1322;
+    --lm-text: #f2f6ff;
+    --lm-text-soft: #d5deed;
+    --lm-muted: #9eabc0;
+    --lm-border: #26344a;
+    --lm-border-strong: #3a4b65;
+    --lm-primary: #60a5fa;
+    --lm-primary-hover: #3b82f6;
+    --lm-primary-soft: rgba(96, 165, 250, 0.16);
+    --lm-success: #4ade80;
+    --lm-danger: #f87171;
+    --lm-warning: #fbbf24;
+    --lm-info: #22d3ee;
+    --lm-success-soft: rgba(74, 222, 128, 0.11);
+    --lm-danger-soft: rgba(248, 113, 113, 0.12);
+    --lm-warning-soft: rgba(251, 191, 36, 0.12);
+    --lm-info-soft: rgba(34, 211, 238, 0.11);
+    --lm-shadow: 0 20px 55px rgba(0, 0, 0, 0.31);
+    --lm-shadow-hover: 0 27px 70px rgba(0, 0, 0, 0.44);
+}
+
+/* =========================================================
+   Основные элементы страницы
+   ========================================================= */
+
+html,
+body {
+    min-height: 100%;
+}
+
+body {
+    margin-bottom: 0;
+    background: radial-gradient( circle at 12% 0%, var(--lm-bg-glow), transparent 32rem ), var(--lm-bg);
+    color: var(--lm-text);
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+body,
+input,
+select,
+textarea,
+button {
+    -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+    background: var(--lm-primary);
+    color: #ffffff;
+}
+
+a {
+    color: var(--lm-primary);
+}
+
+    a:hover {
+        color: var(--lm-primary-hover);
+    }
+
+hr {
+    border-color: var(--lm-border);
+    opacity: 1;
+}
+
+.app-main {
+    min-height: calc(100vh - 150px);
+    padding-bottom: 40px;
+}
+
+/* =========================================================
+   Заголовки и текст
+   ========================================================= */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+strong,
+.auth-title,
+.profile-name,
+.profile-section-title,
+.admin-section-title,
+.admin-subtitle,
+.table-sort-link {
+    color: var(--lm-text);
+}
+
+p,
+.profile-about,
+.event-description,
+.event-details-description,
+.event-location-text,
+.event-chat-message-text,
+.notification-content p,
+.report-description,
+.search-user-card p {
+    color: var(--lm-text-soft);
+}
+
+.text-muted,
+small.text-muted,
+.auth-subtitle,
+.auth-footer,
+.profile-meta,
+.profile-edit-subtitle,
+.privacy-description,
+.notification-date,
+.search-user-stats {
+    color: var(--lm-muted) !important;
+}
+
+/* =========================================================
+   Верхнее меню
+   ========================================================= */
+
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    backdrop-filter: blur(18px);
+}
+
+.app-navbar {
+    background: rgba(255, 255, 255, 0.89);
+    border-bottom: 1px solid var(--lm-border);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+html[data-theme="dark"] .app-navbar {
+    background: rgba(8, 13, 24, 0.90);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.28);
+}
+
+.app-brand {
+    color: var(--lm-text) !important;
+}
+
+.app-nav-link {
+    color: var(--lm-muted) !important;
+}
+
+    .app-nav-link:hover,
+    .app-nav-link:focus {
+        color: var(--lm-text) !important;
+        background: var(--lm-primary-soft);
+    }
+
+.app-navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar-toggler {
+    border-color: var(--lm-border);
+}
+
+    .navbar-toggler:focus {
+        box-shadow: 0 0 0 0.2rem var(--lm-primary-soft);
+    }
+
+html[data-theme="dark"] .navbar-toggler-icon {
+    filter: invert(1);
+}
+
+/* =========================================================
+   Переключатель темы
+   ========================================================= */
+
+.theme-toggle {
+    width: 42px;
+    height: 42px;
+    display: inline-grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--lm-border);
+    border-radius: 50%;
+    background: var(--lm-surface);
+    color: var(--lm-text);
+    transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+    .theme-toggle:hover {
+        transform: translateY(-2px) rotate(8deg);
+        background: var(--lm-surface-hover);
+        border-color: var(--lm-primary);
+    }
+
+.theme-toggle-icon {
+    display: inline-block;
+    font-size: 19px;
+    line-height: 1;
+}
+
+/* =========================================================
+   Карточки и поверхности
+   ========================================================= */
+
+.auth-card,
+.profile-header-card,
+.profile-card,
+.profile-edit-card,
+.admin-card,
+.admin-form-card,
+.admin-stat-card,
+.events-hero,
+.events-filter-card,
+.event-create-card,
+.event-details-header,
+.event-details-card,
+.event-card,
+.empty-events-box,
+.my-events-tabs-card,
+.notification-card,
+.report-form-card,
+.home-feature,
+.home-step,
+.home-final-inner {
+    background: var(--lm-surface);
+    border-color: var(--lm-border);
+    color: var(--lm-text);
+    box-shadow: var(--lm-shadow);
+}
+
+.profile-stat,
+.private-profile-box,
+.profile-avatar-edit-block,
+.privacy-box,
+.event-info-list div,
+.map-help-box,
+.event-location-text,
+.event-details-info div,
+.participant-item,
+.event-chat-messages,
+.chat-locked-box,
+.report-info-list div,
+.admin-compact-item,
+.admin-info-list div,
+.search-user-card {
+    background: var(--lm-surface-soft);
+    border-color: var(--lm-border);
+    color: var(--lm-text);
+}
+
+.event-chat-message {
+    background: var(--lm-surface-raised);
+    border-color: var(--lm-border);
+    color: var(--lm-text);
+}
+
+.event-card,
+.admin-card,
+.admin-stat-card,
+.profile-card,
+.notification-card,
+.search-user-card,
+.participant-item {
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, background-color 0.22s ease;
+}
+
+    .event-card:hover,
+    .admin-card:hover,
+    .admin-stat-card:hover,
+    .profile-card:hover,
+    .notification-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--lm-primary) !important;
+        box-shadow: var(--lm-shadow-hover);
+    }
+
+    .search-user-card:hover,
+    .participant-item:hover {
+        background: var(--lm-surface-hover);
+        border-color: var(--lm-primary);
+        color: var(--lm-text);
+    }
+
+/* =========================================================
+   Поля ввода
+   ========================================================= */
+
+.form-label,
+.form-check-label,
+label {
+    color: var(--lm-text-soft);
+    font-weight: 600;
+}
+
+.form-control,
+.form-select {
+    min-height: 44px;
+    background-color: var(--lm-input-bg);
+    border: 1px solid var(--lm-border-strong);
+    border-radius: 11px;
+    color: var(--lm-text);
+    transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+textarea.form-control {
+    min-height: 110px;
+    resize: vertical;
+}
+
+.form-control:hover,
+.form-select:hover {
+    border-color: var(--lm-primary);
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: var(--lm-input-bg);
+    border-color: var(--lm-primary);
+    color: var(--lm-text);
+    box-shadow: 0 0 0 0.22rem var(--lm-primary-soft);
+}
+
+.form-control::placeholder {
+    color: var(--lm-muted);
+    opacity: 0.75;
+}
+
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled {
+    background-color: var(--lm-surface-soft);
+    border-color: var(--lm-border);
+    color: var(--lm-muted);
+    opacity: 1;
+}
+
+.form-select option {
+    background: var(--lm-input-bg);
+    color: var(--lm-text);
+}
+
+.form-control[type="file"] {
+    padding: 5px;
+}
+
+    .form-control[type="file"]::file-selector-button {
+        height: 32px;
+        margin: 0 12px 0 0;
+        padding: 0 14px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--lm-primary-soft);
+        color: var(--lm-primary);
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+.form-check-input {
+    background-color: var(--lm-input-bg);
+    border-color: var(--lm-border-strong);
+}
+
+    .form-check-input:checked {
+        background-color: var(--lm-primary);
+        border-color: var(--lm-primary);
+    }
+
+    .form-check-input:focus {
+        border-color: var(--lm-primary);
+        box-shadow: 0 0 0 0.22rem var(--lm-primary-soft);
+    }
+
+.input-group-text {
+    background: var(--lm-surface-soft);
+    border-color: var(--lm-border-strong);
+    color: var(--lm-muted);
+}
+
+html[data-theme="dark"] input:-webkit-autofill,
+html[data-theme="dark"] input:-webkit-autofill:hover,
+html[data-theme="dark"] input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--lm-text);
+    -webkit-box-shadow: 0 0 0 1000px var(--lm-input-bg) inset;
+    caret-color: var(--lm-text);
+}
+
+html[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+html[data-theme="dark"] input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+html[data-theme="dark"] input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.85);
+}
+
+/* =========================================================
+   Валидация
+   ========================================================= */
+
+.field-validation-error,
+.validation-summary-errors,
+.text-danger {
+    color: var(--lm-danger) !important;
+}
+
+.input-validation-error {
+    border-color: var(--lm-danger) !important;
+}
+
+    .input-validation-error:focus {
+        box-shadow: 0 0 0 0.22rem var(--lm-danger-soft);
+    }
+
+/* =========================================================
+   Кнопки
+   ========================================================= */
+
+.btn {
+    border-radius: 10px;
+    font-weight: 650;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+    .btn:hover {
+        transform: translateY(-2px);
+    }
+
+.btn-primary {
+    background: linear-gradient( 135deg, var(--lm-primary), #22d3ee );
+    border-color: transparent;
+    color: #ffffff;
+    box-shadow: 0 12px 26px rgba(37, 99, 235, 0.22);
+}
+
+    .btn-primary:hover,
+    .btn-primary:focus {
+        background: linear-gradient( 135deg, var(--lm-primary-hover), #0891b2 );
+        border-color: transparent;
+        color: #ffffff;
+    }
+
+.btn-outline-primary {
+    color: var(--lm-primary);
+    border-color: var(--lm-primary);
+}
+
+    .btn-outline-primary:hover {
+        background: var(--lm-primary);
+        border-color: var(--lm-primary);
+        color: #ffffff;
+    }
+
+.btn-outline-secondary {
+    color: var(--lm-text-soft);
+    border-color: var(--lm-border-strong);
+}
+
+    .btn-outline-secondary:hover {
+        background: var(--lm-surface-hover);
+        border-color: var(--lm-primary);
+        color: var(--lm-text);
+    }
+
+.btn:disabled,
+.btn.disabled {
+    transform: none;
+    opacity: 0.55;
+}
+
+/* =========================================================
+   Таблицы
+   ========================================================= */
+
+.table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--lm-text-soft);
+    --bs-table-border-color: var(--lm-border);
+    --bs-table-striped-bg: var(--lm-surface-soft);
+    --bs-table-striped-color: var(--lm-text);
+    --bs-table-hover-bg: var(--lm-surface-hover);
+    --bs-table-hover-color: var(--lm-text);
+    color: var(--lm-text-soft);
+}
+
+    .table > :not(caption) > * > * {
+        background-color: transparent;
+        color: inherit;
+        border-bottom-color: var(--lm-border);
+    }
+
+    .table th {
+        color: var(--lm-muted);
+        border-bottom-color: var(--lm-border);
+    }
+
+    .table td {
+        color: var(--lm-text-soft);
+        border-bottom-color: var(--lm-border);
+    }
+
+.table-sort-link {
+    text-decoration: none;
+}
+
+    .table-sort-link:hover {
+        color: var(--lm-primary);
+    }
+
+/* =========================================================
+   Выпадающие меню
+   ========================================================= */
+
+.dropdown-menu {
+    background: var(--lm-surface-raised);
+    border: 1px solid var(--lm-border);
+    border-radius: 14px;
+    padding: 8px;
+    box-shadow: var(--lm-shadow);
+}
+
+.dropdown-item,
+.dropdown-item-text {
+    color: var(--lm-text-soft);
+    border-radius: 8px;
+}
+
+    .dropdown-item:hover,
+    .dropdown-item:focus {
+        background: var(--lm-surface-hover);
+        color: var(--lm-text);
+    }
+
+    .dropdown-item.active,
+    .dropdown-item:active {
+        background: var(--lm-primary);
+        color: #ffffff;
+    }
+
+.dropdown-divider {
+    border-color: var(--lm-border);
+}
+
+.user-menu-button {
+    background: var(--lm-surface);
+    border-color: var(--lm-border);
+    color: var(--lm-text);
+}
+
+    .user-menu-button:hover,
+    .user-menu-button[aria-expanded="true"] {
+        background: var(--lm-surface-hover);
+        border-color: var(--lm-primary);
+    }
+
+/* =========================================================
+   Уведомления
+   ========================================================= */
+
+.alert {
+    border-width: 1px;
+    border-radius: 14px;
+}
+
+.alert-success {
+    background: var(--lm-success-soft);
+    border-color: var(--lm-success);
+    color: var(--lm-success);
+}
+
+.alert-danger {
+    background: var(--lm-danger-soft);
+    border-color: var(--lm-danger);
+    color: var(--lm-danger);
+}
+
+.alert-warning {
+    background: var(--lm-warning-soft);
+    border-color: var(--lm-warning);
+    color: var(--lm-warning);
+}
+
+.alert-info {
+    background: var(--lm-info-soft);
+    border-color: var(--lm-info);
+    color: var(--lm-info);
+}
+
+.notification-unread {
+    border-left-color: var(--lm-primary);
+}
+
+.notification-read {
+    opacity: 0.72;
+}
+
+/* =========================================================
+   Пагинация и вкладки
+   ========================================================= */
+
+.page-link {
+    background: var(--lm-surface);
+    border-color: var(--lm-border);
+    color: var(--lm-text-soft);
+}
+
+    .page-link:hover {
+        background: var(--lm-surface-hover);
+        border-color: var(--lm-primary);
+        color: var(--lm-primary);
+    }
+
+    .page-link:focus {
+        background: var(--lm-surface-hover);
+        color: var(--lm-primary);
+        box-shadow: 0 0 0 0.22rem var(--lm-primary-soft);
+    }
+
+.page-item.active .page-link {
+    background: var(--lm-primary);
+    border-color: var(--lm-primary);
+    color: #ffffff;
+}
+
+.page-item.disabled .page-link {
+    background: var(--lm-surface-soft);
+    border-color: var(--lm-border);
+    color: var(--lm-muted);
+}
+
+.nav-tabs {
+    border-color: var(--lm-border);
+}
+
+    .nav-tabs .nav-link,
+    .my-events-tabs .nav-link {
+        color: var(--lm-muted);
+    }
+
+        .nav-tabs .nav-link:hover {
+            border-color: var(--lm-border) var(--lm-border) transparent;
+            color: var(--lm-text);
+        }
+
+        .nav-tabs .nav-link.active,
+        .my-events-tabs .nav-link.active {
+            background: var(--lm-primary);
+            border-color: var(--lm-primary);
+            color: #ffffff;
+        }
+
+/* =========================================================
+   Модальные окна и списки
+   ========================================================= */
+
+.modal-content,
+.offcanvas,
+.toast,
+.popover {
+    background: var(--lm-surface-raised);
+    border-color: var(--lm-border);
+    color: var(--lm-text);
+}
+
+.modal-header,
+.modal-footer,
+.offcanvas-header {
+    border-color: var(--lm-border);
+}
+
+html[data-theme="dark"] .btn-close {
+    filter: invert(1) grayscale(100%) brightness(180%);
+}
+
+.list-group-item {
+    background: var(--lm-surface);
+    border-color: var(--lm-border);
+    color: var(--lm-text-soft);
+}
+
+.list-group-item-action:hover {
+    background: var(--lm-surface-hover);
+    color: var(--lm-text);
+}
+
+/* =========================================================
+   Служебные классы Bootstrap
+   ========================================================= */
+
+.bg-white {
+    background: var(--lm-surface) !important;
+}
+
+.bg-light,
+.text-bg-light {
+    background: var(--lm-surface-soft) !important;
+    border: 1px solid var(--lm-border);
+    color: var(--lm-text) !important;
+}
+
+html[data-theme="dark"] .bg-dark {
+    background: #26344a !important;
+}
+
+.border,
+.border-top,
+.border-bottom,
+.border-start,
+.border-end {
+    border-color: var(--lm-border) !important;
+}
+
+/* =========================================================
+   Изображения профилей
+   ========================================================= */
+
+.profile-avatar,
+.profile-avatar-edit,
+.admin-user-avatar,
+.search-user-card img {
+    border-color: var(--lm-border);
+}
+
+/* =========================================================
+   Карта
+   ========================================================= */
+
+.event-map {
+    border-color: var(--lm-border);
+    background: var(--lm-surface-soft);
+}
+
+/* =========================================================
+   Подвал
+   ========================================================= */
+
+.app-footer {
+    background: var(--lm-bg);
+    border-top-color: var(--lm-border);
+    color: var(--lm-muted);
+}
+
+/* =========================================================
+   Мобильная версия
+   ========================================================= */
+
+@media (max-width: 991px) {
+    .app-navbar-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        margin-top: 14px;
+    }
+
+    .navbar-collapse {
+        padding-top: 12px;
+    }
+
+    .app-nav-link {
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   Отключение анимаций по настройке системы
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
