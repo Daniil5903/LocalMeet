@@ -1,0 +1,14 @@
+.git
+.github
+.vs
+.vscode
+
+**/bin
+**/obj
+**/*.user
+**/*.suo
+**/App_Data
+**/wwwroot/uploads/avatars/*
+**/appsettings.Development.json
+
+README.md
