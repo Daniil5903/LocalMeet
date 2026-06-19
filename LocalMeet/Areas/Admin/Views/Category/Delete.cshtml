@@ -1,0 +1,38 @@
+﻿@model Category
+
+@{
+    ViewData["Title"] = "Удаление категории";
+}
+
+<div class="admin-page">
+    <div class="admin-form-card">
+        <h1>Удаление категории</h1>
+
+        <div class="alert alert-warning">
+            Вы действительно хотите удалить категорию <strong>@Model.Name</strong>?
+        </div>
+
+        @if (Model.Events.Any())
+        {
+            <div class="alert alert-danger">
+                Категорию нельзя удалить, так как к ней привязаны мероприятия.
+            </div>
+        }
+
+        <form asp-area="Admin" asp-controller="Category" asp-action="Delete" method="post">
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" asp-for="Id" />
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger" @(Model.Events.Any() ? "disabled" : "")>
+                    Удалить
+                </button>
+
+                <a asp-area="Admin" asp-controller="Category" asp-action="Index" class="btn btn-outline-secondary">
+                    Отмена
+                </a>
+            </div>
+        </form>
+    </div>
+</div>

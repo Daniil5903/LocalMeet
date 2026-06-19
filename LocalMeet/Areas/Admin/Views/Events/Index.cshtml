@@ -1,0 +1,290 @@
+﻿@using LocalMeet.Models.Enums
+@model IEnumerable<AdminEventListItemViewModel>
+
+@{
+    ViewData["Title"] = "Модерация мероприятий";
+
+    var currentStatus = ViewData["CurrentStatus"] as EventStatus?;
+    var currentSearch = ViewData["CurrentSearch"]?.ToString();
+    var pageNumber = ViewData["PageNumber"] as int? ?? 1;
+    var totalPages = ViewData["TotalPages"] as int? ?? 0;
+    var totalItems = ViewData["TotalItems"] as int? ?? 0;
+
+    string IsSelected(EventStatus? status)
+    {
+        return currentStatus == status ? "selected" : "";
+    }
+
+    string GetSortIcon(string sortName)
+    {
+        var currentSort = ViewData["CurrentSort"]?.ToString();
+
+        return sortName switch
+        {
+            "title" when currentSort == "title" => "▲",
+            "title" when currentSort == "title_desc" => "▼",
+
+            "date" when currentSort == "date" => "▲",
+            "date" when currentSort == "date_desc" => "▼",
+
+            "created" when currentSort == "created" => "▲",
+            "created" when currentSort == "created_desc" => "▼",
+
+            _ => ""
+        };
+    }
+}
+
+<div class="admin-page">
+    <div class="admin-header">
+        <div>
+            <h1>Модерация мероприятий</h1>
+            <p>Проверка, одобрение и отклонение пользовательских мероприятий.</p>
+        </div>
+
+        <a asp-area="" asp-controller="Events" asp-action="Index" class="btn btn-outline-primary">
+            Открыть каталог
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <div class="admin-card mb-4">
+        <form asp-area="Admin" asp-controller="Events" asp-action="Index" method="get" class="row g-3">
+            <div class="col-lg-5">
+                <label class="form-label">Поиск</label>
+                <input type="text"
+                       name="searchQuery"
+                       value="@currentSearch"
+                       class="form-control"
+                       placeholder="Название, описание или адрес" />
+            </div>
+
+            <div class="col-lg-4">
+                <label class="form-label">Статус</label>
+                <select name="status" class="form-select">
+                    <option value="">Все статусы</option>
+                    <option value="@EventStatus.Pending" selected="@IsSelected(EventStatus.Pending)">На модерации</option>
+                    <option value="@EventStatus.Approved" selected="@IsSelected(EventStatus.Approved)">Одобрено</option>
+                    <option value="@EventStatus.Rejected" selected="@IsSelected(EventStatus.Rejected)">Отклонено</option>
+                    <option value="@EventStatus.Cancelled" selected="@IsSelected(EventStatus.Cancelled)">Отменено</option>
+                    <option value="@EventStatus.Completed" selected="@IsSelected(EventStatus.Completed)">Завершено</option>
+                </select>
+            </div>
+
+            <div class="col-lg-3 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary">
+                    Применить
+                </button>
+
+                <a asp-area="Admin" asp-controller="Events" asp-action="Index" class="btn btn-outline-secondary">
+                    Сбросить
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="admin-card">
+        @if (!Model.Any())
+        {
+            <div class="text-muted">
+                Мероприятия не найдены.
+            </div>
+        }
+        else
+        {
+            <div class="text-muted mb-3">
+                Показано @Model.Count() из @totalItems найденных мероприятий.
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+
+                            <th>
+                                <a asp-area="Admin"
+                                   asp-controller="Events"
+                                   asp-action="Index"
+                                   asp-route-status="@currentStatus"
+                                   asp-route-searchQuery="@currentSearch"
+                                   asp-route-sortOrder="@ViewData["TitleSort"]"
+                                   class="table-sort-link">
+                                    Название @GetSortIcon("title")
+                                </a>
+                            </th>
+
+                            <th>Категория</th>
+                            <th>Автор</th>
+
+                            <th>
+                                <a asp-area="Admin"
+                                   asp-controller="Events"
+                                   asp-action="Index"
+                                   asp-route-status="@currentStatus"
+                                   asp-route-searchQuery="@currentSearch"
+                                   asp-route-sortOrder="@ViewData["DateSort"]"
+                                   class="table-sort-link">
+                                    Дата проведения @GetSortIcon("date")
+                                </a>
+                            </th>
+
+                            <th>
+                                <a asp-area="Admin"
+                                   asp-controller="Events"
+                                   asp-action="Index"
+                                   asp-route-status="@currentStatus"
+                                   asp-route-searchQuery="@currentSearch"
+                                   asp-route-sortOrder="@ViewData["CreatedSort"]"
+                                   class="table-sort-link">
+                                    Дата создания @GetSortIcon("created")
+                                </a>
+                            </th>
+
+                            <th>Статус</th>
+                            <th class="text-end">Действия</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Id</td>
+
+                                <td>
+                                    <strong>@item.Title</strong>
+                                </td>
+
+                                <td>@item.CategoryName</td>
+
+                                <td>
+                                    <div>@item.CreatorName</div>
+                                    <small class="text-muted">@item.CreatorEmail</small>
+                                </td>
+
+                                <td>@item.EventDate.ToString("dd.MM.yyyy HH:mm")</td>
+
+                                <td>@item.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+
+                                <td>
+                                    <span class="badge @item.StatusCssClass">
+                                        @item.StatusText
+                                    </span>
+                                </td>
+
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-2 flex-wrap">
+                                        <a asp-area=""
+                                           asp-controller="Events"
+                                           asp-action="Details"
+                                           asp-route-id="@item.Id"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            Открыть
+                                        </a>
+
+                                        @if (item.Status != EventStatus.Approved)
+                                        {
+                                            <form asp-area="Admin"
+                                                  asp-controller="Events"
+                                                  asp-action="Approve"
+                                                  asp-route-id="@item.Id"
+                                                  method="post">
+                                                @Html.AntiForgeryToken()
+
+                                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                                    Одобрить
+                                                </button>
+                                            </form>
+                                        }
+
+                                        @if (item.Status != EventStatus.Rejected)
+                                        {
+                                            <a asp-area="Admin"
+                                               asp-controller="Events"
+                                               asp-action="Reject"
+                                               asp-route-id="@item.Id"
+                                               class="btn btn-sm btn-outline-danger">
+                                                Отклонить
+                                            </a>
+                                        }
+
+                                        @if (item.Status == EventStatus.Rejected)
+                                        {
+                                            <form asp-area="Admin"
+                                                  asp-controller="Events"
+                                                  asp-action="SendToModeration"
+                                                  asp-route-id="@item.Id"
+                                                  method="post">
+                                                @Html.AntiForgeryToken()
+
+                                                <button type="submit" class="btn btn-sm btn-outline-warning">
+                                                    На модерацию
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (totalPages > 1)
+            {
+                <nav class="pagination-wrapper" aria-label="Навигация по мероприятиям">
+                    <ul class="pagination mb-0">
+                        <li class="page-item @(pageNumber > 1 ? "" : "disabled")">
+                            <a class="page-link"
+                               asp-area="Admin"
+                               asp-controller="Events"
+                               asp-action="Index"
+                               asp-route-status="@currentStatus"
+                               asp-route-searchQuery="@currentSearch"
+                               asp-route-sortOrder="@ViewData["CurrentSort"]"
+                               asp-route-page="@(pageNumber - 1)">
+                                Назад
+                            </a>
+                        </li>
+
+                        @for (var i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == pageNumber ? "active" : "")">
+                                <a class="page-link"
+                                   asp-area="Admin"
+                                   asp-controller="Events"
+                                   asp-action="Index"
+                                   asp-route-status="@currentStatus"
+                                   asp-route-searchQuery="@currentSearch"
+                                   asp-route-sortOrder="@ViewData["CurrentSort"]"
+                                   asp-route-page="@i">
+                                    @i
+                                </a>
+                            </li>
+                        }
+
+                        <li class="page-item @(pageNumber < totalPages ? "" : "disabled")">
+                            <a class="page-link"
+                               asp-area="Admin"
+                               asp-controller="Events"
+                               asp-action="Index"
+                               asp-route-status="@currentStatus"
+                               asp-route-searchQuery="@currentSearch"
+                               asp-route-sortOrder="@ViewData["CurrentSort"]"
+                               asp-route-page="@(pageNumber + 1)">
+                                Вперед
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        }
+    </div>
+</div>

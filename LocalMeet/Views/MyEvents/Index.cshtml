@@ -1,0 +1,72 @@
+﻿@model MyEventsViewModel
+
+@{
+    ViewData["Title"] = "Мои мероприятия";
+}
+
+<div class="my-events-page">
+    <div class="events-hero">
+        <div>
+            <h1>Мои мероприятия</h1>
+            <p>Управляйте созданными мероприятиями и отслеживайте события, в которых участвуете.</p>
+        </div>
+
+        <a asp-area="" asp-controller="Events" asp-action="Create" class="btn btn-primary">
+            Создать мероприятие
+        </a>
+    </div>
+
+    <div class="my-events-tabs-card">
+        <ul class="nav nav-pills my-events-tabs" id="myEventsTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active"
+                        id="created-tab"
+                        data-bs-toggle="pill"
+                        data-bs-target="#created"
+                        type="button"
+                        role="tab">
+                    Созданные мной
+                    <span class="badge text-bg-light ms-1">@Model.CreatedEvents.Count</span>
+                </button>
+            </li>
+
+            <li class="nav-item" role="presentation">
+                <button class="nav-link"
+                        id="participating-tab"
+                        data-bs-toggle="pill"
+                        data-bs-target="#participating"
+                        type="button"
+                        role="tab">
+                    Я участвую
+                    <span class="badge text-bg-light ms-1">@Model.ParticipatingEvents.Count</span>
+                </button>
+            </li>
+
+            <li class="nav-item" role="presentation">
+                <button class="nav-link"
+                        id="past-tab"
+                        data-bs-toggle="pill"
+                        data-bs-target="#past"
+                        type="button"
+                        role="tab">
+                    Прошедшие
+                    <span class="badge text-bg-light ms-1">@Model.PastEvents.Count</span>
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <div class="tab-content mt-4" id="myEventsTabsContent">
+        <div class="tab-pane fade show active" id="created" role="tabpanel">
+            <partial name="_EventListCards" model="Model.CreatedEvents" />
+        </div>
+
+        <div class="tab-pane fade" id="participating" role="tabpanel">
+            <partial name="_EventListCards" model="Model.ParticipatingEvents" />
+        </div>
+
+        <div class="tab-pane fade" id="past" role="tabpanel">
+            <partial name="_EventListCards" model="Model.PastEvents" />
+        </div>
+    </div>
+</div>

@@ -1,0 +1,118 @@
+﻿@model LocalMeet.Models.ViewModels.Search.SearchViewModel
+
+@{
+    ViewData["Title"] = "Поиск";
+
+    var query = Model?.Query;
+    var users = Model?.Users ?? new List<LocalMeet.Models.ViewModels.Search.SearchUserListItemViewModel>();
+    var events = Model?.Events ?? new List<LocalMeet.Models.ViewModels.Events.EventListItemViewModel>();
+
+    var hasQuery = !string.IsNullOrWhiteSpace(query);
+    var hasResults = users.Any() || events.Any();
+}
+
+<div class="search-page">
+    <div class="events-hero">
+        <div>
+            <h1>Поиск по LocalMeet</h1>
+            <p>Найдите мероприятия, категории, места проведения или пользователей сервиса.</p>
+        </div>
+    </div>
+
+    <div class="events-filter-card">
+        <form asp-area="" asp-controller="Search" asp-action="Index" method="get" class="row g-3">
+            <div class="col-lg-10">
+                <label class="form-label">Поисковый запрос</label>
+                <input type="text"
+                       name="query"
+                       value="@query"
+                       class="form-control"
+                       placeholder="Например: футбол, лекция, парк, имя пользователя" />
+            </div>
+
+            <div class="col-lg-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    Найти
+                </button>
+            </div>
+        </form>
+    </div>
+
+    @if (!hasQuery)
+    {
+        <div class="empty-events-box">
+            <h2>Введите запрос</h2>
+            <p>Поиск покажет подходящие мероприятия и пользователей.</p>
+        </div>
+    }
+    else if (!hasResults)
+    {
+        <div class="empty-events-box">
+            <h2>Ничего не найдено</h2>
+            <p>Попробуйте изменить запрос или использовать другое слово.</p>
+        </div>
+    }
+    else
+    {
+        <div class="admin-card mb-4">
+            <div class="admin-card-title-row">
+                <h2 class="admin-section-title">Пользователи</h2>
+                <span class="text-muted">Найдено: @users.Count</span>
+            </div>
+
+            @if (!users.Any())
+            {
+                <div class="text-muted">Пользователи по запросу не найдены.</div>
+            }
+            else
+            {
+                <div class="search-users-grid">
+                    @foreach (var user in users)
+                    {
+                        var avatarPath = string.IsNullOrWhiteSpace(user.AvatarPath)
+                        ? "/images/default-avatar.png"
+                        : user.AvatarPath;
+
+                        <a asp-area=""
+                           asp-controller="Profile"
+                           asp-action="ViewUser"
+                           asp-route-id="@user.Id"
+                           class="search-user-card">
+                            <img src="@avatarPath" alt="Аватар пользователя" />
+
+                            <div>
+                                <h3>@user.FullName</h3>
+                                <div class="text-muted small">
+                                    На сервисе с @user.RegistrationDate.ToString("dd.MM.yyyy")
+                                </div>
+
+                                @if (user.IsPrivateProfile)
+                                {
+                                    <span class="badge bg-secondary mt-2">Закрытый профиль</span>
+                                }
+                                else if (!string.IsNullOrWhiteSpace(user.AboutPreview))
+                                {
+                                    <p>@user.AboutPreview</p>
+                                }
+
+                                <div class="search-user-stats">
+                                    <span>Создано: @user.CreatedEventsCount</span>
+                                    <span>Участий: @user.ParticipationsCount</span>
+                                </div>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+
+        <div>
+            <div class="admin-card-title-row">
+                <h2 class="admin-section-title">Мероприятия</h2>
+                <span class="text-muted">Найдено: @events.Count</span>
+            </div>
+
+            <partial name="~/Views/Shared/_EventListCards.cshtml" model="events" />
+        </div>
+    }
+</div>

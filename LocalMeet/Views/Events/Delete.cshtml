@@ -1,0 +1,60 @@
+﻿@model DeleteEventViewModel
+
+@{
+    ViewData["Title"] = "Удаление мероприятия";
+}
+
+<div class="event-details-page">
+    <div class="event-details-card">
+        <h1 class="mb-3">Удаление мероприятия</h1>
+
+        <div class="alert alert-danger">
+            Вы действительно хотите удалить мероприятие <strong>@Model.Title</strong>?
+        </div>
+
+        <div class="event-details-info mb-4">
+            <div>
+                <span>Категория</span>
+                <strong>@Model.CategoryName</strong>
+            </div>
+
+            <div>
+                <span>Дата проведения</span>
+                <strong>@Model.EventDate.ToString("dd.MM.yyyy HH:mm")</strong>
+            </div>
+
+            <div>
+                <span>Участников</span>
+                <strong>@Model.ParticipantsCount</strong>
+            </div>
+
+            <div>
+                <span>Статус</span>
+                <strong>
+                    <span class="badge @Model.StatusCssClass">@Model.StatusText</span>
+                </strong>
+            </div>
+        </div>
+
+        @if (Model.ParticipantsCount > 0)
+        {
+            <div class="alert alert-warning">
+                У мероприятия есть зарегистрированные участники. При удалении мероприятия их регистрации также будут удалены.
+            </div>
+        }
+
+        <form asp-area="" asp-controller="Events" asp-action="Delete" asp-route-id="@Model.Id" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger">
+                    Удалить мероприятие
+                </button>
+
+                <a asp-area="" asp-controller="Events" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                    Отмена
+                </a>
+            </div>
+        </form>
+    </div>
+</div>

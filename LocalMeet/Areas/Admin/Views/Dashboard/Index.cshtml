@@ -1,0 +1,124 @@
+﻿@model DashboardViewModel
+
+@{
+    ViewData["Title"] = "Панель администратора";
+}
+
+<div class="admin-page">
+    <div class="admin-header">
+        <div>
+            <h1>Панель администратора</h1>
+            <p>Общая сводка по пользователям, мероприятиям, жалобам и активности системы.</p>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-area="Admin" asp-controller="Events" asp-action="Index" class="btn btn-outline-primary">
+                Модерация
+            </a>
+
+            <a asp-area="Admin" asp-controller="Reports" asp-action="Index" class="btn btn-outline-danger">
+                Жалобы
+            </a>
+        </div>
+    </div>
+
+    <div class="admin-stats-grid mb-4">
+        <a asp-area="Admin" asp-controller="UserManagement" asp-action="Index" class="admin-stat-card">
+            <span>Пользователи</span>
+            <strong>@Model.UsersCount</strong>
+            <small>Заблокировано: @Model.BlockedUsersCount</small>
+        </a>
+
+        <a asp-area="Admin" asp-controller="Events" asp-action="Index" class="admin-stat-card">
+            <span>Мероприятия</span>
+            <strong>@Model.EventsCount</strong>
+            <small>На модерации: @Model.PendingEventsCount</small>
+        </a>
+
+        <a asp-area="Admin" asp-controller="Reports" asp-action="Index" class="admin-stat-card">
+            <span>Жалобы</span>
+            <strong>@Model.ReportsCount</strong>
+            <small>Новые: @Model.NewReportsCount</small>
+        </a>
+
+        <a asp-area="Admin" asp-controller="Category" asp-action="Index" class="admin-stat-card">
+            <span>Категории</span>
+            <strong>@Model.CategoriesCount</strong>
+            <small>Участий: @Model.ParticipationsCount</small>
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="admin-card h-100">
+                <div class="admin-card-title-row">
+                    <h2 class="admin-section-title">Последние мероприятия</h2>
+                    <a asp-area="Admin" asp-controller="Events" asp-action="Index">Все мероприятия</a>
+                </div>
+
+                @if (!Model.RecentEvents.Any())
+                {
+                    <div class="text-muted">Мероприятия пока не созданы.</div>
+                }
+                else
+                {
+                    <div class="admin-compact-list">
+                        @foreach (var item in Model.RecentEvents)
+                        {
+                            <div class="admin-compact-item">
+                                <div>
+                                    <a asp-area="" asp-controller="Events" asp-action="Details" asp-route-id="@item.Id" class="fw-bold">
+                                        @item.Title
+                                    </a>
+                                    <div class="text-muted small">
+                                        @item.CreatorName, @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                                    </div>
+                                </div>
+
+                                <span class="badge @item.StatusCssClass">
+                                    @item.StatusText
+                                </span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="admin-card h-100">
+                <div class="admin-card-title-row">
+                    <h2 class="admin-section-title">Последние жалобы</h2>
+                    <a asp-area="Admin" asp-controller="Reports" asp-action="Index">Все жалобы</a>
+                </div>
+
+                @if (!Model.RecentReports.Any())
+                {
+                    <div class="text-muted">Жалоб пока нет.</div>
+                }
+                else
+                {
+                    <div class="admin-compact-list">
+                        @foreach (var item in Model.RecentReports)
+                        {
+                            <div class="admin-compact-item">
+                                <div>
+                                    <a asp-area="Admin" asp-controller="Reports" asp-action="Details" asp-route-id="@item.Id" class="fw-bold">
+                                        Жалоба №@item.Id
+                                    </a>
+                                    <div class="text-muted small">
+                                        @item.TargetTypeText, @item.AuthorName, @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                                    </div>
+                                </div>
+
+                                <span class="badge @item.StatusCssClass">
+                                    @item.StatusText
+                                </span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

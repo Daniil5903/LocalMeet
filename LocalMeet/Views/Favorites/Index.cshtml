@@ -1,0 +1,34 @@
+﻿@model IEnumerable<EventListItemViewModel>
+
+@{
+    ViewData["Title"] = "Избранные мероприятия";
+}
+
+<div class="my-events-page">
+    <div class="events-hero">
+        <div>
+            <h1>Избранные мероприятия</h1>
+            <p>Список мероприятий, которые вы сохранили для быстрого доступа.</p>
+        </div>
+
+        <a asp-area="" asp-controller="Events" asp-action="Index" class="btn btn-outline-primary">
+            Перейти в каталог
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <partial name="_EventListCards" model="Model" />
+</div>

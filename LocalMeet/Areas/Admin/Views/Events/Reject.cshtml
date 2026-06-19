@@ -1,0 +1,51 @@
+﻿@model RejectEventViewModel
+
+@{
+    ViewData["Title"] = "Отклонение мероприятия";
+}
+
+<div class="admin-page">
+    <div class="admin-form-card">
+        <h1>Отклонение мероприятия</h1>
+
+        <p class="text-muted">
+            Укажите причину, по которой мероприятие не может быть опубликовано.
+        </p>
+
+        <div class="alert alert-warning">
+            Мероприятие: <strong>@Model.EventTitle</strong>
+        </div>
+
+        <form asp-area="Admin" asp-controller="Events" asp-action="Reject" method="post">
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" asp-for="EventId" />
+            <input type="hidden" asp-for="EventTitle" />
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="RejectReason" class="form-label"></label>
+                <textarea asp-for="RejectReason"
+                          class="form-control"
+                          rows="5"
+                          placeholder="Например: описание мероприятия содержит недостаточно информации"></textarea>
+                <span asp-validation-for="RejectReason" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger">
+                    Отклонить мероприятие
+                </button>
+
+                <a asp-area="Admin" asp-controller="Events" asp-action="Index" class="btn btn-outline-secondary">
+                    Отмена
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

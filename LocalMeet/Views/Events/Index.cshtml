@@ -1,0 +1,146 @@
+﻿@model EventCatalogViewModel
+
+@{
+    ViewData["Title"] = "Мероприятия";
+    var eventDateValue = Model.EventDate?.ToString("yyyy-MM-dd");
+}
+
+<div class="events-page">
+    <div class="events-hero">
+        <div>
+            <h1>Локальные мероприятия</h1>
+            <p>Находите интересные события рядом с собой и присоединяйтесь к ним.</p>
+        </div>
+
+        <a asp-area="" asp-controller="Events" asp-action="Create" class="btn btn-primary">
+            Создать мероприятие
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="events-filter-card">
+        <form asp-area="" asp-controller="Events" asp-action="Index" method="get" class="row g-3">
+            <div class="col-lg-4">
+                <label class="form-label">Поиск</label>
+                <input type="text"
+                       name="searchQuery"
+                       value="@Model.SearchQuery"
+                       class="form-control"
+                       placeholder="Название или описание" />
+            </div>
+
+            <div class="col-lg-3">
+                <label class="form-label">Категория</label>
+                <select name="categoryId" class="form-select" asp-items="Model.Categories">
+                    <option value="">Все категории</option>
+                </select>
+            </div>
+
+            <div class="col-lg-3">
+                <label class="form-label">Дата</label>
+                <input type="date"
+                       name="eventDate"
+                       value="@eventDateValue"
+                       class="form-control" />
+            </div>
+
+            <div class="col-lg-2">
+                <label class="form-label">Сортировка</label>
+                <select name="sortOrder" class="form-select">
+                    <option value="" selected="@(string.IsNullOrWhiteSpace(Model.SortOrder))">
+                        Сначала ближайшие
+                    </option>
+                    <option value="date_desc" selected="@(Model.SortOrder == "date_desc")">
+                        Сначала поздние
+                    </option>
+                    <option value="created_desc" selected="@(Model.SortOrder == "created_desc")">
+                        Новые
+                    </option>
+                    <option value="title" selected="@(Model.SortOrder == "title")">
+                        По названию А-Я
+                    </option>
+                    <option value="title_desc" selected="@(Model.SortOrder == "title_desc")">
+                        По названию Я-А
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    Применить
+                </button>
+
+                <a asp-area="" asp-controller="Events" asp-action="Index" class="btn btn-outline-secondary">
+                    Сбросить
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <partial name="_EventListCards" model="Model.Events" />
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="pagination-wrapper" aria-label="Навигация по мероприятиям">
+            <ul class="pagination mb-0">
+                <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                    <a class="page-link"
+                       asp-area=""
+                       asp-controller="Events"
+                       asp-action="Index"
+                       asp-route-searchQuery="@Model.SearchQuery"
+                       asp-route-categoryId="@Model.CategoryId"
+                       asp-route-eventDate="@eventDateValue"
+                       asp-route-sortOrder="@Model.SortOrder"
+                       asp-route-page="@(Model.PageNumber - 1)">
+                        Назад
+                    </a>
+                </li>
+
+                @for (var i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link"
+                           asp-area=""
+                           asp-controller="Events"
+                           asp-action="Index"
+                           asp-route-searchQuery="@Model.SearchQuery"
+                           asp-route-categoryId="@Model.CategoryId"
+                           asp-route-eventDate="@eventDateValue"
+                           asp-route-sortOrder="@Model.SortOrder"
+                           asp-route-page="@i">
+                            @i
+                        </a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                    <a class="page-link"
+                       asp-area=""
+                       asp-controller="Events"
+                       asp-action="Index"
+                       asp-route-searchQuery="@Model.SearchQuery"
+                       asp-route-categoryId="@Model.CategoryId"
+                       asp-route-eventDate="@eventDateValue"
+                       asp-route-sortOrder="@Model.SortOrder"
+                       asp-route-page="@(Model.PageNumber + 1)">
+                        Вперед
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>

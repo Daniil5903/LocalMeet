@@ -1,0 +1,318 @@
+﻿@model UserManagementIndexViewModel
+
+@{
+    ViewData["Title"] = "Пользователи";
+    var activeStatus = "active";
+    var blockedStatus = "blocked";
+
+    string IsRoleSelected(string? role)
+    {
+        return Model.RoleFilter == role ? "selected" : "";
+    }
+
+    string IsStatusSelected(string? status)
+    {
+        return Model.StatusFilter == status ? "selected" : "";
+    }
+
+    string GetSortIcon(string sortName)
+    {
+        return sortName switch
+        {
+            "name" when Model.SortOrder == "name" => "▲",
+            "name" when Model.SortOrder == "name_desc" => "▼",
+
+            "date" when Model.SortOrder == "date" => "▲",
+            "date" when Model.SortOrder == "date_desc" => "▼",
+
+            "last_visit" when Model.SortOrder == "last_visit" => "▲",
+            "last_visit" when Model.SortOrder == "last_visit_desc" => "▼",
+
+            "events" when Model.SortOrder == "events" => "▲",
+            "events" when Model.SortOrder == "events_desc" => "▼",
+
+            _ => ""
+        };
+    }
+}
+
+<div class="admin-page">
+    <div class="admin-header">
+        <div>
+            <h1>Пользователи</h1>
+            <p>Поиск, просмотр активности и блокировка учетных записей.</p>
+        </div>
+
+        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-secondary">
+            Панель администратора
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="admin-stats-grid mb-4">
+        <div class="admin-stat-card">
+            <span>Всего</span>
+            <strong>@Model.TotalUsersCount</strong>
+            <small>Зарегистрированных пользователей</small>
+        </div>
+
+        <div class="admin-stat-card">
+            <span>Активные</span>
+            <strong>@Model.ActiveUsersCount</strong>
+            <small>Могут входить в систему</small>
+        </div>
+
+        <div class="admin-stat-card">
+            <span>Заблокированы</span>
+            <strong>@Model.BlockedUsersCount</strong>
+            <small>Доступ ограничен</small>
+        </div>
+
+        <div class="admin-stat-card">
+            <span>Администраторы</span>
+            <strong>@Model.AdminsCount</strong>
+            <small>В текущей выборке</small>
+        </div>
+    </div>
+
+    <div class="admin-card mb-4">
+        <form asp-area="Admin" asp-controller="UserManagement" asp-action="Index" method="get" class="row g-3">
+            <div class="col-lg-4">
+                <label class="form-label">Поиск</label>
+                <input type="text"
+                       name="searchQuery"
+                       value="@Model.SearchQuery"
+                       class="form-control"
+                       placeholder="Имя, фамилия или email" />
+            </div>
+
+            <div class="col-lg-3">
+                <label class="form-label">Роль</label>
+                <select name="roleFilter" class="form-select">
+                    <option value="">Все роли</option>
+                    <option value="@AppRole.User" selected="@IsRoleSelected(AppRole.User)">Пользователи</option>
+                    <option value="@AppRole.Admin" selected="@IsRoleSelected(AppRole.Admin)">Администраторы</option>
+                </select>
+            </div>
+
+            <div class="col-lg-3">
+                <label class="form-label">Статус</label>
+                <select name="statusFilter" class="form-select">
+                    <option value="">Все статусы</option>
+                    <option value="@activeStatus" selected="@IsStatusSelected(activeStatus)">Активные</option>
+                    <option value="@blockedStatus" selected="@IsStatusSelected(blockedStatus)">Заблокированные</option>
+                </select>
+            </div>
+
+            <div class="col-lg-2 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary">
+                    Найти
+                </button>
+
+                <a asp-area="Admin" asp-controller="UserManagement" asp-action="Index" class="btn btn-outline-secondary">
+                    Сбросить
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="admin-card">
+        @if (!Model.Users.Any())
+        {
+            <div class="text-muted">
+                Пользователи не найдены.
+            </div>
+        }
+        else
+        {
+            <div class="text-muted mb-3">
+                Показано @Model.Users.Count из @Model.TotalItems найденных записей.
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>
+                                <a asp-area="Admin"
+                                   asp-controller="UserManagement"
+                                   asp-action="Index"
+                                   asp-route-searchQuery="@Model.SearchQuery"
+                                   asp-route-roleFilter="@Model.RoleFilter"
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-sortOrder="@ViewData["NameSort"]"
+                                   class="table-sort-link">
+                                    Пользователь @GetSortIcon("name")
+                                </a>
+                            </th>
+                            <th>Роль</th>
+                            <th>Статус</th>
+                            <th>
+                                <a asp-area="Admin"
+                                   asp-controller="UserManagement"
+                                   asp-action="Index"
+                                   asp-route-searchQuery="@Model.SearchQuery"
+                                   asp-route-roleFilter="@Model.RoleFilter"
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-sortOrder="@ViewData["DateSort"]"
+                                   class="table-sort-link">
+                                    Регистрация @GetSortIcon("date")
+                                </a>
+                            </th>
+                            <th>
+                                <a asp-area="Admin"
+                                   asp-controller="UserManagement"
+                                   asp-action="Index"
+                                   asp-route-searchQuery="@Model.SearchQuery"
+                                   asp-route-roleFilter="@Model.RoleFilter"
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-sortOrder="@ViewData["LastVisitSort"]"
+                                   class="table-sort-link">
+                                    Последний вход @GetSortIcon("last_visit")
+                                </a>
+                            </th>
+                            <th>
+                                <a asp-area="Admin"
+                                   asp-controller="UserManagement"
+                                   asp-action="Index"
+                                   asp-route-searchQuery="@Model.SearchQuery"
+                                   asp-route-roleFilter="@Model.RoleFilter"
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-sortOrder="@ViewData["EventsSort"]"
+                                   class="table-sort-link">
+                                    Мероприятия @GetSortIcon("events")
+                                </a>
+                            </th>
+                            <th>Участия</th>
+                            <th class="text-end">Действия</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var item in Model.Users)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@item.FullName</strong>
+                                    <div class="text-muted small">@item.Email</div>
+                                    @if (item.IsPrivateProfile)
+                                    {
+                                        <span class="badge bg-secondary mt-1">Закрытый профиль</span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (item.IsAdmin)
+                                    {
+                                        <span class="badge bg-dark">Admin</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-light text-dark">User</span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (item.IsBlocked)
+                                    {
+                                        <span class="badge bg-danger">Заблокирован</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Активен</span>
+                                    }
+                            </td>
+
+                            <td>@item.RegistrationDate.ToString("dd.MM.yyyy")</td>
+
+                            <td>
+                                @(item.LastVisit.HasValue
+                                                            ? item.LastVisit.Value.ToString("dd.MM.yyyy HH:mm")
+                                                            : "Нет данных")
+                        </td>
+
+                                <td>@item.CreatedEventsCount</td>
+                                <td>@item.ParticipationsCount</td>
+
+                                <td class="text-end">
+                                    <a asp-area="Admin"
+                                       asp-controller="UserManagement"
+                                       asp-action="Details"
+                                       asp-route-id="@item.Id"
+                                       class="btn btn-sm btn-outline-primary">
+                                        Открыть
+                                    </a>
+                                </td>
+                            </tr>
+                                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (Model.TotalPages > 1)
+            {
+                <nav class="pagination-wrapper" aria-label="Навигация по пользователям">
+                    <ul class="pagination mb-0">
+                        <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                            <a class="page-link"
+                               asp-area="Admin"
+                               asp-controller="UserManagement"
+                               asp-action="Index"
+                               asp-route-searchQuery="@Model.SearchQuery"
+                               asp-route-roleFilter="@Model.RoleFilter"
+                               asp-route-statusFilter="@Model.StatusFilter"
+                               asp-route-sortOrder="@Model.SortOrder"
+                               asp-route-page="@(Model.PageNumber - 1)">
+                                Назад
+                            </a>
+                        </li>
+
+                        @for (var i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                                <a class="page-link"
+                                   asp-area="Admin"
+                                   asp-controller="UserManagement"
+                                   asp-action="Index"
+                                   asp-route-searchQuery="@Model.SearchQuery"
+                                   asp-route-roleFilter="@Model.RoleFilter"
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-sortOrder="@Model.SortOrder"
+                                   asp-route-page="@i">
+                                    @i
+                                </a>
+                            </li>
+                        }
+
+                        <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                            <a class="page-link"
+                               asp-area="Admin"
+                               asp-controller="UserManagement"
+                               asp-action="Index"
+                               asp-route-searchQuery="@Model.SearchQuery"
+                               asp-route-roleFilter="@Model.RoleFilter"
+                               asp-route-statusFilter="@Model.StatusFilter"
+                               asp-route-sortOrder="@Model.SortOrder"
+                               asp-route-page="@(Model.PageNumber + 1)">
+                                Вперед
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        }
+    </div>
+</div>

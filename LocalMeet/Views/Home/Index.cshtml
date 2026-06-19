@@ -1,0 +1,159 @@
+﻿@{
+    ViewData["Title"] = "Главная";
+}
+
+<div class="home-shell">
+    <section class="home-hero">
+        <div class="home-hero-backdrop"></div>
+
+        <div class="container home-hero-inner">
+            <div class="home-hero-content" data-reveal>
+                <div class="home-kicker">Сервис локальных мероприятий</div>
+
+                <h1>LocalMeet</h1>
+
+                <p>
+                    Находите события рядом с собой, создавайте собственные встречи и собирайте людей вокруг общих интересов.
+                </p>
+
+                <div class="home-hero-actions">
+                    <a asp-area="" asp-controller="Events" asp-action="Index" class="btn btn-primary btn-lg">
+                        Найти мероприятие
+                    </a>
+
+                    <a asp-area="" asp-controller="Events" asp-action="Create" class="btn btn-outline-light btn-lg">
+                        Создать событие
+                    </a>
+                </div>
+            </div>
+
+            <div class="home-hero-visual" data-reveal>
+                <div class="home-orbit">
+                    <div class="home-orbit-center">
+                        <span class="app-brand-mark large">
+                            <span></span>
+                        </span>
+                    </div>
+
+                    <div class="home-orbit-card card-one">
+                        <strong>18:30</strong>
+                        <span>Встреча в центре</span>
+                    </div>
+
+                    <div class="home-orbit-card card-two">
+                        <strong>Спорт</strong>
+                        <span>12 участников</span>
+                    </div>
+
+                    <div class="home-orbit-card card-three">
+                        <strong>Карта</strong>
+                        <span>Место выбрано</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-section">
+        <div class="container">
+            <div class="home-section-heading" data-reveal>
+                <span>Что это такое</span>
+                <h2>Площадка, где локальные события становятся видимыми</h2>
+                <p>
+                    Пользователь может найти мероприятие, записаться на него, добавить в избранное,
+                    обсудить детали в чате и получить уведомления о важных изменениях.
+                </p>
+            </div>
+
+            <div class="home-feature-grid">
+                <div class="home-feature" data-reveal>
+                    <div class="home-feature-number">01</div>
+                    <h3>Поиск мероприятий</h3>
+                    <p>Каталог помогает быстро найти событие по теме, дате, категории или месту проведения.</p>
+                </div>
+
+                <div class="home-feature" data-reveal>
+                    <div class="home-feature-number">02</div>
+                    <h3>Создание событий</h3>
+                    <p>Организатор заполняет форму, выбирает точку на карте и отправляет мероприятие на модерацию.</p>
+                </div>
+
+                <div class="home-feature" data-reveal>
+                    <div class="home-feature-number">03</div>
+                    <h3>Участие и общение</h3>
+                    <p>Участники записываются на мероприятие, получают уведомления и общаются в чате события.</p>
+                </div>
+
+                <div class="home-feature" data-reveal>
+                    <div class="home-feature-number">04</div>
+                    <h3>Контроль качества</h3>
+                    <p>Администратор модерирует мероприятия, обрабатывает жалобы и управляет пользователями.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-flow">
+        <div class="container">
+            <div class="home-flow-layout">
+                <div class="home-section-heading compact" data-reveal>
+                    <span>Как работает сервис</span>
+                    <h2>От идеи встречи до реального события</h2>
+                </div>
+
+                <div class="home-steps">
+                    <div class="home-step" data-reveal>
+                        <strong>1</strong>
+                        <div>
+                            <h3>Пользователь создаёт мероприятие</h3>
+                            <p>Указывает название, описание, дату, категорию, лимит участников и место на карте.</p>
+                        </div>
+                    </div>
+
+                    <div class="home-step" data-reveal>
+                        <strong>2</strong>
+                        <div>
+                            <h3>Администратор проверяет публикацию</h3>
+                            <p>Мероприятие проходит модерацию и после одобрения появляется в общем каталоге.</p>
+                        </div>
+                    </div>
+
+                    <div class="home-step" data-reveal>
+                        <strong>3</strong>
+                        <div>
+                            <h3>Участники присоединяются</h3>
+                            <p>Пользователи записываются, добавляют событие в избранное и обсуждают детали в чате.</p>
+                        </div>
+                    </div>
+
+                    <div class="home-step" data-reveal>
+                        <strong>4</strong>
+                        <div>
+                            <h3>Система отправляет уведомления</h3>
+                            <p>Пользователь видит изменения статуса, действия участников и результаты обработки жалоб.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-final">
+        <div class="container">
+            <div class="home-final-inner" data-reveal>
+                <h2>Готовы найти событие рядом?</h2>
+                <p>Откройте каталог мероприятий или создайте собственную встречу для людей поблизости.</p>
+
+                <div class="home-hero-actions justify-content-center">
+                    <a asp-area="" asp-controller="Events" asp-action="Index" class="btn btn-primary btn-lg">
+                        Перейти к каталогу
+                    </a>
+
+                    <a asp-area="" asp-controller="Search" asp-action="Index" class="btn btn-outline-primary btn-lg">
+                        Открыть поиск
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

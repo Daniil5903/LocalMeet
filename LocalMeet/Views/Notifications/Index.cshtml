@@ -1,0 +1,137 @@
+﻿@model NotificationsIndexViewModel
+
+@{
+    ViewData["Title"] = "Уведомления";
+    var unreadCount = Model.Notifications.Count(n => !n.IsRead);
+}
+
+<div class="notifications-page">
+    <div class="events-hero">
+        <div>
+            <h1>Уведомления</h1>
+            <p>Здесь отображаются важные события, связанные с вашими мероприятиями и участием.</p>
+        </div>
+
+        @if (unreadCount > 0)
+        {
+            <form asp-area="" asp-controller="Notifications" asp-action="MarkAllAsRead" method="post">
+                @Html.AntiForgeryToken()
+
+                <button type="submit" class="btn btn-primary">
+                    Отметить все как прочитанные
+                </button>
+            </form>
+        }
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (!Model.Notifications.Any())
+    {
+        <div class="empty-events-box">
+            <h2>Уведомлений нет</h2>
+            <p>Когда произойдёт важное событие, оно появится на этой странице.</p>
+        </div>
+    }
+    else
+    {
+        <div class="notifications-list">
+            @foreach (var notification in Model.Notifications)
+            {
+                <div class="notification-card @(notification.IsRead ? "notification-read" : "notification-unread")">
+                    <div class="notification-content">
+                        <div class="notification-header">
+                            <h2>@notification.Title</h2>
+
+                            @if (notification.IsRead)
+                            {
+                                <span class="badge bg-secondary">Прочитано</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-primary">Новое</span>
+                            }
+                        </div>
+
+                        <p>@notification.Message</p>
+
+                        <div class="notification-date">
+                            @notification.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                        </div>
+                    </div>
+
+                    <div class="notification-actions">
+                        <form asp-area=""
+                              asp-controller="Notifications"
+                              asp-action="MarkAsRead"
+                              asp-route-id="@notification.Id"
+                              method="post">
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                @(string.IsNullOrWhiteSpace(notification.Link) ? "Прочитать" : "Открыть")
+                            </button>
+                        </form>
+
+                        <form asp-area=""
+                              asp-controller="Notifications"
+                              asp-action="Delete"
+                              asp-route-id="@notification.Id"
+                              method="post">
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                Удалить
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="pagination-wrapper" aria-label="Навигация по уведомлениям">
+                <ul class="pagination mb-0">
+                    <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                        <a class="page-link"
+                           asp-area=""
+                           asp-controller="Notifications"
+                           asp-action="Index"
+                           asp-route-page="@(Model.PageNumber - 1)">
+                            Назад
+                        </a>
+                    </li>
+
+                    @for (var i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                            <a class="page-link"
+                               asp-area=""
+                               asp-controller="Notifications"
+                               asp-action="Index"
+                               asp-route-page="@i">
+                                @i
+                            </a>
+                        </li>
+                    }
+
+                    <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                        <a class="page-link"
+                           asp-area=""
+                           asp-controller="Notifications"
+                           asp-action="Index"
+                           asp-route-page="@(Model.PageNumber + 1)">
+                            Вперед
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    }
+</div>

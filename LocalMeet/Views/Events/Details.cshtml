@@ -1,0 +1,439 @@
+﻿@using System.Globalization
+@using LocalMeet.Models.Enums
+@model EventDetailsViewModel
+
+@{
+    ViewData["Title"] = Model.Title;
+
+    var creatorAvatar = string.IsNullOrWhiteSpace(Model.CreatorAvatarPath)
+        ? "/images/default-avatar.png"
+        : Model.CreatorAvatarPath;
+
+    var latitude = Model.Latitude?.ToString(CultureInfo.InvariantCulture);
+    var longitude = Model.Longitude?.ToString(CultureInfo.InvariantCulture);
+
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+}
+
+@section Styles {
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+}
+
+<div class="event-details-page">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="event-details-header">
+        <div>
+            <div class="event-details-badges">
+                <span class="badge text-bg-primary">@Model.CategoryName</span>
+                <span class="badge @Model.StatusCssClass">@Model.StatusText</span>
+            </div>
+
+            <h1>@Model.Title</h1>
+
+            <p>
+                Создано: @Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+            </p>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            @if (Model.CanReportEvent)
+            {
+                <a asp-area=""
+                   asp-controller="Reports"
+                   asp-action="CreateForEvent"
+                   asp-route-eventId="@Model.Id"
+                   asp-route-returnUrl="@returnUrl"
+                   class="btn btn-outline-danger">
+                    Пожаловаться
+                </a>
+            }
+
+            @if (Model.CanManage)
+            {
+                <a asp-area=""
+                   asp-controller="Events"
+                   asp-action="Edit"
+                   asp-route-id="@Model.Id"
+                   class="btn btn-outline-secondary">
+                    Редактировать
+                </a>
+
+                <a asp-area=""
+                   asp-controller="Events"
+                   asp-action="Delete"
+                   asp-route-id="@Model.Id"
+                   class="btn btn-outline-danger">
+                    Удалить
+                </a>
+            }
+        </div>
+    </div>
+
+    @if (Model.Status == EventStatus.Pending)
+    {
+        <div class="alert alert-warning">
+            Мероприятие ожидает проверки администрацией и пока не отображается в общем каталоге.
+        </div>
+    }
+
+    @if (Model.Status == EventStatus.Rejected && !string.IsNullOrWhiteSpace(Model.RejectReason))
+    {
+        <div class="alert alert-danger">
+            <strong>Причина отклонения:</strong> @Model.RejectReason
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="event-details-card">
+                <h2>Описание</h2>
+                <p class="event-details-description">@Model.Description</p>
+            </div>
+
+            <div class="event-details-card mt-4">
+                <h2>Место проведения</h2>
+
+                <div class="event-location-text">
+                    @Model.Address
+                </div>
+
+                @if (Model.Latitude.HasValue && Model.Longitude.HasValue)
+                {
+                    <div id="eventDetailsMap"
+                         class="event-map mt-3"
+                         data-latitude="@latitude"
+                         data-longitude="@longitude"
+                         data-title="@Model.Title"></div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">
+                        Координаты мероприятия не указаны.
+                    </p>
+                }
+            </div>
+
+            <div class="event-details-card mt-4">
+                <h2>Чат мероприятия</h2>
+
+                @if (Model.CanUseChat)
+                {
+                    <div id="eventChatRoot"
+                         class="event-chat"
+                         data-event-id="@Model.Id"
+                         data-is-admin="@Model.IsAdmin.ToString().ToLowerInvariant()"
+                         data-current-user-id="@Model.CurrentUserId"
+                         data-can-report-messages="@((Model.IsAuthenticated && !Model.IsAdmin).ToString().ToLowerInvariant())"
+                         data-return-url="@returnUrl">
+
+                        <div id="eventChatMessages" class="event-chat-messages">
+                            @foreach (var message in Model.ChatMessages)
+                            {
+                                var authorAvatar = string.IsNullOrWhiteSpace(message.AuthorAvatarPath)
+                                ? "/images/default-avatar.png"
+                                : message.AuthorAvatarPath;
+
+                                <div class="event-chat-message @(message.IsDeleted ? "event-chat-message-deleted" : "")"
+                                     data-message-id="@message.Id">
+                                    <img src="@authorAvatar" alt="Аватар" class="event-chat-avatar" />
+
+                                    <div class="event-chat-message-body">
+                                        <div class="event-chat-message-header">
+                                            <strong>@message.AuthorName</strong>
+                                            <span>@message.CreatedAt.ToString("dd.MM.yyyy HH:mm")</span>
+                                        </div>
+
+                                        <div class="event-chat-message-text">
+                                            @if (message.IsDeleted)
+                                            {
+                                                <em>Сообщение удалено администрацией</em>
+                                            }
+                                            else
+                                            {
+                                                @message.Text
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="event-chat-actions">
+                                        @if (message.CanReport)
+                                        {
+                                            <a asp-area=""
+                                               asp-controller="Reports"
+                                               asp-action="CreateForMessage"
+                                               asp-route-messageId="@message.Id"
+                                               asp-route-returnUrl="@returnUrl"
+                                               class="btn btn-sm btn-outline-danger">
+                                                Пожаловаться
+                                            </a>
+                                        }
+
+                                        @if (Model.IsAdmin && !message.IsDeleted)
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-danger event-chat-delete-button"
+                                                    data-message-id="@message.Id">
+                                                Удалить
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <div id="eventChatError" class="alert alert-danger d-none mt-3"></div>
+
+                        <form id="eventChatForm" class="event-chat-form mt-3">
+                            <textarea id="eventChatInput"
+                                  class="form-control"
+                                  rows="3"
+                                  maxlength="1000"
+                                  placeholder="Введите сообщение"></textarea>
+
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <small class="text-muted">
+                                    Максимальная длина сообщения — 1000 символов.
+                                </small>
+
+                                <button type="submit" class="btn btn-primary">
+                                    Отправить
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                }
+                else
+                {
+                    <div class="chat-locked-box">
+                        @if (!Model.IsAuthenticated)
+                        {
+                            <h3>Войдите в аккаунт</h3>
+                            <p>Чат доступен только авторизованным пользователям, участвующим в мероприятии.</p>
+
+                            <a asp-area=""
+                               asp-controller="Account"
+                               asp-action="Login"
+                               class="btn btn-primary">
+                                Войти
+                            </a>
+                        }
+                        else if (Model.Status != EventStatus.Approved)
+                        {
+                            <h3>Чат недоступен</h3>
+                            <p>Чат открывается только для одобренных мероприятий.</p>
+                        }
+                        else
+                        {
+                            <h3>Чат доступен участникам</h3>
+                            <p>Чтобы писать сообщения, необходимо быть организатором или участником мероприятия.</p>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="event-details-card">
+                <h2>Информация</h2>
+
+                <div class="event-details-info">
+                    <div>
+                        <span>Дата и время</span>
+                        <strong>@Model.EventDate.ToString("dd.MM.yyyy HH:mm")</strong>
+                    </div>
+
+                    <div>
+                        <span>Участники</span>
+                        <strong>@Model.ParticipantsCount / @Model.MaxParticipants</strong>
+                    </div>
+
+                    <div>
+                        <span>Категория</span>
+                        <strong>@Model.CategoryName</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="event-details-card mt-4">
+                <h2>Организатор</h2>
+
+                <div class="event-creator-box">
+                    <img src="@creatorAvatar" alt="Аватар организатора" />
+
+                    <div>
+                        <strong>@Model.CreatorName</strong>
+
+                        <a asp-area=""
+                           asp-controller="Profile"
+                           asp-action="ViewUser"
+                           asp-route-id="@Model.CreatorId">
+                            Открыть профиль
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="event-details-card mt-4">
+                @if (!Model.IsAuthenticated)
+                {
+                    <a asp-area=""
+                       asp-controller="Account"
+                       asp-action="Login"
+                       class="btn btn-primary w-100">
+                        Войти, чтобы участвовать
+                    </a>
+                }
+                else if (Model.IsCreator)
+                {
+                    <button class="btn btn-outline-secondary w-100" disabled>
+                        Вы организатор мероприятия
+                    </button>
+                }
+                else if (Model.CanJoin)
+                {
+                    <form asp-area=""
+                          asp-controller="Participation"
+                          asp-action="Join"
+                          asp-route-eventId="@Model.Id"
+                          method="post">
+                        @Html.AntiForgeryToken()
+
+                        <button type="submit" class="btn btn-primary w-100">
+                            Принять участие
+                        </button>
+                    </form>
+                }
+                else if (Model.CanLeave)
+                {
+                    <form asp-area=""
+                          asp-controller="Participation"
+                          asp-action="Leave"
+                          asp-route-eventId="@Model.Id"
+                          method="post">
+                        @Html.AntiForgeryToken()
+
+                        <button type="submit" class="btn btn-outline-danger w-100">
+                            Отменить участие
+                        </button>
+                    </form>
+                }
+                else if (Model.IsParticipant)
+                {
+                    <button class="btn btn-success w-100" disabled>
+                        Вы зарегистрированы
+                    </button>
+                }
+                else if (Model.IsFull)
+                {
+                    <button class="btn btn-outline-secondary w-100" disabled>
+                        Нет свободных мест
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-outline-secondary w-100" disabled>
+                        Участие недоступно
+                    </button>
+                }
+            </div>
+
+            @if (Model.CanToggleFavorite)
+            {
+                <div class="event-details-card mt-4">
+                    @if (Model.IsFavorite)
+                    {
+                        <form asp-area=""
+                              asp-controller="Favorites"
+                              asp-action="Remove"
+                              asp-route-eventId="@Model.Id"
+                              method="post">
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                            <button type="submit" class="btn btn-outline-warning w-100">
+                                ★ Удалить из избранного
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-area=""
+                              asp-controller="Favorites"
+                              asp-action="Add"
+                              asp-route-eventId="@Model.Id"
+                              method="post">
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                            <button type="submit" class="btn btn-outline-secondary w-100">
+                                ☆ Добавить в избранное
+                            </button>
+                        </form>
+                    }
+                </div>
+            }
+
+            <div class="event-details-card mt-4">
+                <h2>Участники</h2>
+
+                @if (!Model.Participants.Any())
+                {
+                    <p class="text-muted mb-0">
+                        Пока никто не зарегистрировался на мероприятие.
+                    </p>
+                }
+                else
+                {
+                    <div class="participants-list">
+                        @foreach (var participant in Model.Participants)
+                        {
+                            var participantAvatar = string.IsNullOrWhiteSpace(participant.AvatarPath)
+                            ? "/images/default-avatar.png"
+                            : participant.AvatarPath;
+
+                            <a asp-area=""
+                               asp-controller="Profile"
+                               asp-action="ViewUser"
+                               asp-route-id="@participant.UserId"
+                               class="participant-item">
+                                <img src="@participantAvatar" alt="Аватар участника" />
+
+                                <div>
+                                    <strong>@participant.FullName</strong>
+                                    <span>с @participant.JoinedAt.ToString("dd.MM.yyyy HH:mm")</span>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="~/js/event-details-map.js" asp-append-version="true"></script>
+
+    @if (Model.CanUseChat)
+    {
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+        <script src="~/js/event-chat.js" asp-append-version="true"></script>
+    }
+}

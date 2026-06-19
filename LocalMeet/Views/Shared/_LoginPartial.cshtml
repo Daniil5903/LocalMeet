@@ -1,0 +1,151 @@
+﻿@using LocalMeet.Data
+@using LocalMeet.Models.Entities
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using LocalMeet.Models.Enums
+
+@inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
+@inject ApplicationDbContext DbContext
+
+@if (SignInManager.IsSignedIn(User))
+{
+    var currentUser = await UserManager.GetUserAsync(User);
+    var avatarPath = string.IsNullOrWhiteSpace(currentUser?.AvatarPath)
+        ? "/images/default-avatar.png"
+        : currentUser.AvatarPath;
+
+    var unreadNotificationsCount = currentUser == null
+        ? 0
+        : await DbContext.Notifications.CountAsync(n => n.UserId == currentUser.Id && !n.IsRead);
+
+    var newReportsCount = currentUser == null
+        ? 0
+        : await DbContext.Reports.CountAsync(r => r.Status == ReportStatus.New);
+
+    <div class="dropdown">
+        <button class="btn user-menu-button dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <img src="@avatarPath" alt="Аватар" class="user-menu-avatar" />
+            <span>@currentUser?.FirstName</span>
+
+            @if (unreadNotificationsCount > 0)
+            {
+                <span class="badge bg-danger">
+                    @unreadNotificationsCount
+                </span>
+            }
+        </button>
+
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+                <span class="dropdown-item-text text-muted">
+                    @currentUser?.Email
+                </span>
+            </li>
+
+            <li>
+                <hr class="dropdown-divider" />
+            </li>
+
+            <li>
+                <a asp-area="" asp-controller="Profile" asp-action="Index" class="dropdown-item">
+                    Профиль
+                </a>
+            </li>
+
+            <li>
+                <a asp-area="" asp-controller="Profile" asp-action="Edit" class="dropdown-item">
+                    Настройки профиля
+                </a>
+            </li>
+
+            <li>
+                <a asp-area="" asp-controller="MyEvents" asp-action="Index" class="dropdown-item">
+                    Мои мероприятия
+                </a>
+            </li>
+
+            <li>
+                <a asp-area="" asp-controller="Favorites" asp-action="Index" class="dropdown-item">
+                    Избранное
+                </a>
+            </li>
+
+            <li>
+                <a asp-area="" asp-controller="Notifications" asp-action="Index" class="dropdown-item">
+                    Уведомления
+                    @if (unreadNotificationsCount > 0)
+                    {
+                        <span class="badge bg-danger ms-1">@unreadNotificationsCount</span>
+                    }
+                </a>
+            </li>
+
+            @if (currentUser != null && await UserManager.IsInRoleAsync(currentUser, AppRole.Admin))
+            {
+                <li>
+                    <hr class="dropdown-divider" />
+                </li>
+
+                <li>
+                    <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="dropdown-item">
+                        Панель администратора
+                    </a>
+                </li>
+
+                <li>
+                    <a asp-area="Admin" asp-controller="UserManagement" asp-action="Index" class="dropdown-item">
+                        Пользователи
+                    </a>
+                </li>
+
+                <li>
+                    <a asp-area="Admin" asp-controller="Category" asp-action="Index" class="dropdown-item">
+                        Управление категориями
+                    </a>
+                </li>
+
+                <li>
+                    <a asp-area="Admin" asp-controller="Events" asp-action="Index" class="dropdown-item">
+                        Модерация мероприятий
+                    </a>
+                </li>
+
+                <li>
+                    <a asp-area="Admin" asp-controller="Reports" asp-action="Index" class="dropdown-item">
+                        Жалобы
+                        @if (newReportsCount > 0)
+                        {
+                            <span class="badge bg-danger ms-1">@newReportsCount</span>
+                        }
+                    </a>
+                </li>
+            }
+
+            <li>
+                <hr class="dropdown-divider" />
+            </li>
+
+            <li>
+                <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="dropdown-item">
+                        Выйти
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </div>
+}
+else
+{
+    <div class="d-flex gap-2">
+        <a asp-area="" asp-controller="Account" asp-action="Login" class="btn btn-outline-primary">
+            Войти
+        </a>
+
+        <a asp-area="" asp-controller="Account" asp-action="Register" class="btn btn-primary">
+            Регистрация
+        </a>
+    </div>
+}

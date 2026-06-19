@@ -1,0 +1,270 @@
+﻿@model AdminReportDetailsViewModel
+
+@{
+    ViewData["Title"] = $"Жалоба №{Model.Id}";
+
+    var processModel = new ProcessReportViewModel
+    {
+        ReportId = Model.Id
+    };
+}
+
+<div class="admin-page">
+    <div class="admin-header">
+        <div>
+            <h1>Жалоба №@Model.Id</h1>
+            <p>Подробная информация и действия администратора.</p>
+        </div>
+
+        <a asp-area="Admin" asp-controller="Reports" asp-action="Index" class="btn btn-outline-secondary">
+            Назад к списку
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="admin-card">
+                <h2 class="admin-section-title">Информация о жалобе</h2>
+
+                <div class="report-info-list">
+                    <div>
+                        <span>Статус</span>
+                        <strong>
+                            <span class="badge @Model.StatusCssClass">@Model.StatusText</span>
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Тип объекта</span>
+                        <strong>@Model.TargetTypeText</strong>
+                    </div>
+
+                    <div>
+                        <span>Объект</span>
+                        <strong>@Model.TargetTitle</strong>
+                    </div>
+
+                    <div>
+                        <span>Дата создания</span>
+                        <strong>@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</strong>
+                    </div>
+
+                    <div>
+                        <span>Дата обработки</span>
+                        <strong>
+                            @(Model.ReviewedAt.HasValue
+                                                        ? Model.ReviewedAt.Value.ToString("dd.MM.yyyy HH:mm")
+                                                        : "Не обработана")
+                        </strong>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <h3 class="admin-subtitle">Описание жалобы</h3>
+                    <p class="report-description">@Model.Description</p>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.AdminComment))
+                {
+                    <div class="mt-4">
+                        <h3 class="admin-subtitle">Комментарий администратора</h3>
+                        <p class="report-description">@Model.AdminComment</p>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.TargetLink))
+                {
+                    <div class="mt-4">
+                        <a href="@Model.TargetLink" class="btn btn-outline-primary">
+                            Открыть объект жалобы
+                        </a>
+                    </div>
+                }
+            </div>
+
+            <div class="admin-card mt-4">
+                <h2 class="admin-section-title">Обработка жалобы</h2>
+
+                @if (Model.Status == ReportStatus.New)
+                {
+                    <form asp-area="Admin"
+                          asp-controller="Reports"
+                          asp-action="TakeInWork"
+                          asp-route-id="@Model.Id"
+                          method="post"
+                          class="mb-3">
+                        @Html.AntiForgeryToken()
+
+                        <button type="submit" class="btn btn-warning">
+                            Взять в работу
+                        </button>
+                    </form>
+                }
+
+                <form asp-area="Admin" asp-controller="Reports" asp-action="Close" method="post" class="mb-3">
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" name="ReportId" value="@Model.Id" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Комментарий администратора</label>
+                        <textarea name="AdminComment"
+                                  class="form-control"
+                                  rows="4"
+                                  placeholder="Введите результат рассмотрения жалобы"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-success">
+                        Закрыть жалобу
+                    </button>
+                </form>
+
+                <form asp-area="Admin" asp-controller="Reports" asp-action="Reject" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" name="ReportId" value="@Model.Id" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Комментарий администратора</label>
+                        <textarea name="AdminComment"
+                                  class="form-control"
+                                  rows="4"
+                                  placeholder="Укажите причину отклонения жалобы"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-secondary">
+                        Отклонить жалобу
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="admin-card">
+                <h2 class="admin-section-title">Автор жалобы</h2>
+
+                <div class="report-info-list">
+                    <div>
+                        <span>Имя</span>
+                        <strong>@Model.AuthorName</strong>
+                    </div>
+
+                    <div>
+                        <span>Email</span>
+                        <strong>@Model.AuthorEmail</strong>
+                    </div>
+                </div>
+
+                <a asp-area=""
+                   asp-controller="Profile"
+                   asp-action="ViewUser"
+                   asp-route-id="@Model.AuthorId"
+                   class="btn btn-outline-primary w-100 mt-3">
+                    Открыть профиль автора
+                </a>
+            </div>
+
+            <div class="admin-card mt-4">
+                <h2 class="admin-section-title">Действия по объекту</h2>
+
+                @if (Model.TargetType == ReportTargetType.User && Model.CanBlockUser)
+                {
+                    if (Model.TargetUserIsBlocked)
+                    {
+                        <form asp-area="Admin"
+                              asp-controller="Reports"
+                              asp-action="UnblockTargetUser"
+                              asp-route-id="@Model.Id"
+                              method="post">
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit" class="btn btn-outline-success w-100">
+                                Разблокировать пользователя
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-area="Admin"
+                              asp-controller="Reports"
+                              asp-action="BlockTargetUser"
+                              asp-route-id="@Model.Id"
+                              method="post">
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit" class="btn btn-outline-danger w-100">
+                                Заблокировать пользователя
+                            </button>
+                        </form>
+                    }
+                }
+                else if (Model.TargetType == ReportTargetType.Event)
+                {
+                    if (Model.CanCancelEvent)
+                    {
+                        <form asp-area="Admin"
+                              asp-controller="Reports"
+                              asp-action="CancelTargetEvent"
+                              asp-route-id="@Model.Id"
+                              method="post">
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit" class="btn btn-outline-danger w-100">
+                                Отменить мероприятие
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="text-muted">
+                            Мероприятие уже отменено или недоступно.
+                        </div>
+                    }
+                }
+                else if (Model.TargetType == ReportTargetType.Message)
+                {
+                    if (Model.CanHideMessage)
+                    {
+                        <form asp-area="Admin"
+                              asp-controller="Reports"
+                              asp-action="HideTargetMessage"
+                              asp-route-id="@Model.Id"
+                              method="post">
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit" class="btn btn-outline-danger w-100">
+                                Скрыть сообщение
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="text-muted">
+                            Сообщение уже скрыто или недоступно.
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-muted">
+                        Нет доступных действий.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

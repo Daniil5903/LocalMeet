@@ -1,0 +1,100 @@
+﻿@model CreateEventViewModel
+
+@{
+    ViewData["Title"] = "Создание мероприятия";
+}
+
+@section Styles {
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+}
+
+<div class="event-create-page">
+    <div class="event-create-card">
+        <h1>Создание мероприятия</h1>
+        <p class="text-muted">
+            Заполните информацию о мероприятии. После создания оно будет отправлено на модерацию.
+        </p>
+
+        <form asp-area="" asp-controller="Events" asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" placeholder="Например: Вечер настольных игр" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description"
+                          class="form-control"
+                          rows="6"
+                          placeholder="Опишите цель мероприятия, формат, условия участия"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-6 mb-3">
+                    <label asp-for="CategoryId" class="form-label"></label>
+                    <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select">
+                        <option value="">Выберите категорию</option>
+                    </select>
+                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                </div>
+
+                <div class="col-lg-6 mb-3">
+                    <label asp-for="EventDate" class="form-label"></label>
+                    <input asp-for="EventDate" type="datetime-local" class="form-control" />
+                    <span asp-validation-for="EventDate" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="MaxParticipants" class="form-label"></label>
+                <input asp-for="MaxParticipants" type="number" min="1" class="form-control" />
+                <span asp-validation-for="MaxParticipants" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Address" class="form-label"></label>
+                <input asp-for="Address"
+                       id="Address"
+                       class="form-control"
+                       placeholder="Адрес заполнится автоматически после выбора точки на карте" />
+                <span asp-validation-for="Address" class="text-danger"></span>
+            </div>
+
+            <div class="map-help-box">
+                Нажмите на карту, чтобы выбрать точное место проведения мероприятия.
+            </div>
+
+            <div id="eventCreateMap" class="event-map"></div>
+
+            <input type="hidden" asp-for="Latitude" id="Latitude" />
+            <input type="hidden" asp-for="Longitude" id="Longitude" />
+
+            <span asp-validation-for="Latitude" class="text-danger"></span>
+            <span asp-validation-for="Longitude" class="text-danger"></span>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">
+                    Создать мероприятие
+                </button>
+
+                <a asp-area="" asp-controller="Events" asp-action="Index" class="btn btn-outline-secondary">
+                    Отмена
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="~/js/event-create-map.js" asp-append-version="true"></script>
+}

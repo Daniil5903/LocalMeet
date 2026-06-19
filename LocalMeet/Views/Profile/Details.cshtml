@@ -1,0 +1,160 @@
+﻿@model ProfileViewModel
+
+@{
+    ViewData["Title"] = "Профиль пользователя";
+
+    var avatarPath = string.IsNullOrWhiteSpace(Model.AvatarPath)
+        ? "/images/default-avatar.png"
+        : Model.AvatarPath;
+
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+}
+
+<div class="profile-page">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="profile-header-card">
+        <div class="profile-header-left">
+            <img src="@avatarPath" alt="Аватар пользователя" class="profile-avatar" />
+
+            <div>
+                <h1 class="profile-name">
+                    @Model.FirstName @Model.LastName
+                </h1>
+
+                <div class="profile-meta">
+                    Пользователь LocalMeet с @Model.RegistrationDate.ToString("dd.MM.yyyy")
+                </div>
+
+                @if (Model.IsPrivateProfile && !Model.IsOwnProfile)
+                {
+                    <div class="badge bg-secondary mt-2">
+                        Закрытый профиль
+                    </div>
+                }
+
+                @if (Model.IsBlocked)
+                {
+                    <div class="badge bg-danger mt-2">
+                        Пользователь заблокирован
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            @if (Model.IsOwnProfile)
+            {
+                <a asp-controller="Profile" asp-action="Edit" class="btn btn-primary">
+                    Редактировать профиль
+                </a>
+            }
+            else
+            {
+                <a asp-area=""
+                   asp-controller="Reports"
+                   asp-action="CreateForUser"
+                   asp-route-userId="@Model.Id"
+                   asp-route-returnUrl="@returnUrl"
+                   class="btn btn-outline-danger">
+                    Пожаловаться
+                </a>
+            }
+        </div>
+    </div>
+
+    <div class="row g-4 mt-2">
+        <div class="col-lg-8">
+            <div class="profile-card">
+                <h2 class="profile-section-title">Информация</h2>
+
+                @if (Model.CanViewPrivateInfo)
+                {
+                    <div class="profile-info-list">
+                        <div class="profile-info-item">
+                            <span>Email</span>
+                            <strong>@Model.Email</strong>
+                        </div>
+
+                        <div class="profile-info-item">
+                            <span>Дата регистрации</span>
+                            <strong>@Model.RegistrationDate.ToString("dd.MM.yyyy HH:mm")</strong>
+                        </div>
+
+                        <div class="profile-info-item">
+                            <span>Последний вход</span>
+                            <strong>
+                                @(Model.LastVisit.HasValue
+                                                            ? Model.LastVisit.Value.ToString("dd.MM.yyyy HH:mm")
+                                                            : "Нет данных")
+                        </strong>
+                    </div>
+                </div>
+
+                    <div class="mt-4">
+                        <h3 class="profile-subtitle">О себе</h3>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.About))
+                        {
+                            <p class="profile-about">
+                                @Model.About
+                            </p>
+                        }
+                        else
+                        {
+                            <p class="text-muted">
+                                Пользователь пока не добавил описание профиля.
+                            </p>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="private-profile-box">
+                        <h3>Профиль закрыт</h3>
+                        <p>
+                            Пользователь ограничил отображение личной информации.
+                        </p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="profile-card">
+                <h2 class="profile-section-title">Статистика</h2>
+
+                @if (Model.CanViewPrivateInfo)
+                {
+                    <div class="profile-stat">
+                        <span>Создано мероприятий</span>
+                        <strong>@Model.CreatedEventsCount</strong>
+                    </div>
+
+                    <div class="profile-stat">
+                        <span>Участий в мероприятиях</span>
+                        <strong>@Model.ParticipatedEventsCount</strong>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">
+                        Статистика скрыта настройками приватности.
+                    </p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
