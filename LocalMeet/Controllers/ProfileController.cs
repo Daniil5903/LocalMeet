@@ -209,10 +209,134 @@ namespace LocalMeet.Controllers
             }
 
             TempData["SuccessMessage"] =
-                "Профиль успешно обновлен";
+                "Профиль успешно обновлён";
 
             return RedirectToAction(
                 nameof(Index));
+        }
+
+        [HttpPost]
+        [Authorize(Roles = AppRole.Admin)]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BlockUser(
+            string id,
+            string? returnUrl)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return NotFound();
+            }
+
+            var targetUser =
+                await _userManager.FindByIdAsync(id);
+
+            if (targetUser == null)
+            {
+                return NotFound();
+            }
+
+            var currentUserId =
+                _userManager.GetUserId(User);
+
+            if (targetUser.Id == currentUserId)
+            {
+                TempData["ErrorMessage"] =
+                    "Нельзя заблокировать собственную учётную запись";
+
+                return RedirectAfterUserAction(
+                    targetUser.Id,
+                    returnUrl);
+            }
+
+            var targetUserIsAdmin =
+                await _userManager.IsInRoleAsync(
+                    targetUser,
+                    AppRole.Admin);
+
+            if (targetUserIsAdmin)
+            {
+                TempData["ErrorMessage"] =
+                    "Нельзя заблокировать администратора";
+
+                return RedirectAfterUserAction(
+                    targetUser.Id,
+                    returnUrl);
+            }
+
+            if (!targetUser.IsBlocked)
+            {
+                targetUser.IsBlocked = true;
+
+                await _userManager.UpdateAsync(
+                    targetUser);
+
+                _context.Notifications.Add(
+                    new Notification
+                    {
+                        UserId = targetUser.Id,
+                        Title = "Учётная запись заблокирована",
+                        Message = "Ваша учётная запись была заблокирована администратором.",
+                        Link = null,
+                        CreatedAt = DateTime.Now
+                    });
+
+                await _context.SaveChangesAsync();
+            }
+
+            TempData["SuccessMessage"] =
+                "Пользователь заблокирован";
+
+            return RedirectAfterUserAction(
+                targetUser.Id,
+                returnUrl);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = AppRole.Admin)]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnblockUser(
+            string id,
+            string? returnUrl)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return NotFound();
+            }
+
+            var targetUser =
+                await _userManager.FindByIdAsync(id);
+
+            if (targetUser == null)
+            {
+                return NotFound();
+            }
+
+            if (targetUser.IsBlocked)
+            {
+                targetUser.IsBlocked = false;
+
+                await _userManager.UpdateAsync(
+                    targetUser);
+
+                _context.Notifications.Add(
+                    new Notification
+                    {
+                        UserId = targetUser.Id,
+                        Title = "Учётная запись разблокирована",
+                        Message = "Ваша учётная запись была разблокирована администратором.",
+                        Link = null,
+                        CreatedAt = DateTime.Now
+                    });
+
+                await _context.SaveChangesAsync();
+            }
+
+            TempData["SuccessMessage"] =
+                "Пользователь разблокирован";
+
+            return RedirectAfterUserAction(
+                targetUser.Id,
+                returnUrl);
         }
 
         private async Task<ProfileViewModel>
@@ -224,23 +348,35 @@ namespace LocalMeet.Controllers
             var isOwnProfile =
                 profileUser.Id == currentUser.Id;
 
+            var profileUserIsAdmin =
+                await _userManager.IsInRoleAsync(
+                    profileUser,
+                    AppRole.Admin);
+
             var canViewPrivateInfo =
                 isOwnProfile ||
                 isAdmin ||
                 !profileUser.IsPrivateProfile;
 
-            var createdEventsCount =
-                await _context.Events.CountAsync(
-                    eventEntity =>
-                        eventEntity.CreatorId ==
-                        profileUser.Id);
+            var recentCreatedEvents =
+                await _context.Events
+                    .Where(eventEntity =>
+                        eventEntity.CreatorId == profileUser.Id)
+                    .OrderByDescending(eventEntity =>
+                        eventEntity.CreatedAt)
+                    .Take(5)
+                    .ToListAsync();
 
-            var participatedEventsCount =
+            var recentParticipations =
                 await _context.Participations
-                    .CountAsync(
-                        participation =>
-                            participation.UserId ==
-                            profileUser.Id);
+                    .Where(participation =>
+                        participation.UserId == profileUser.Id)
+                    .Include(participation =>
+                        participation.Event)
+                    .OrderByDescending(participation =>
+                        participation.CreatedAt)
+                    .Take(5)
+                    .ToListAsync();
 
             return new ProfileViewModel
             {
@@ -257,18 +393,143 @@ namespace LocalMeet.Controllers
                     profileUser.IsPrivateProfile,
                 IsBlocked =
                     profileUser.IsBlocked,
+                IsProfileUserAdmin =
+                    profileUserIsAdmin,
                 RegistrationDate =
                     profileUser.RegistrationDate,
                 LastVisit =
                     profileUser.LastVisit,
                 IsOwnProfile =
                     isOwnProfile,
+                IsCurrentUserAdmin =
+                    isAdmin,
                 CanViewPrivateInfo =
                     canViewPrivateInfo,
+                CanEditProfile =
+                    isOwnProfile,
+                CanReportUser =
+                    !isOwnProfile &&
+                    !isAdmin,
+                CanAdminBlockUser =
+                    isAdmin &&
+                    !isOwnProfile &&
+                    !profileUserIsAdmin &&
+                    !profileUser.IsBlocked,
+                CanAdminUnblockUser =
+                    isAdmin &&
+                    !isOwnProfile &&
+                    !profileUserIsAdmin &&
+                    profileUser.IsBlocked,
+                CanOpenAdminCard =
+                    isAdmin,
                 CreatedEventsCount =
-                    createdEventsCount,
+                    await _context.Events.CountAsync(
+                        eventEntity =>
+                            eventEntity.CreatorId ==
+                            profileUser.Id),
                 ParticipatedEventsCount =
-                    participatedEventsCount
+                    await _context.Participations
+                        .CountAsync(
+                            participation =>
+                                participation.UserId ==
+                                profileUser.Id),
+                FavoriteEventsCount =
+                    await _context.FavoriteEvents
+                        .CountAsync(
+                            favorite =>
+                                favorite.UserId ==
+                                profileUser.Id),
+                MessagesCount =
+                    await _context.EventMessages
+                        .CountAsync(
+                            message =>
+                                message.UserId ==
+                                profileUser.Id &&
+                                !message.IsDeleted),
+                RecentCreatedEvents =
+                    recentCreatedEvents
+                        .Select(eventEntity =>
+                            new ProfileEventItemViewModel
+                            {
+                                Id = eventEntity.Id,
+                                Title = eventEntity.Title,
+                                EventDate = eventEntity.EventDate,
+                                StatusText =
+                                    GetEventStatusText(
+                                        eventEntity.Status),
+                                StatusCssClass =
+                                    GetEventStatusCssClass(
+                                        eventEntity.Status)
+                            })
+                        .ToList(),
+                RecentParticipations =
+                    recentParticipations
+                        .Select(participation =>
+                            new ProfileEventItemViewModel
+                            {
+                                Id = participation.EventId,
+                                Title = participation.Event == null
+                                    ? "Мероприятие не найдено"
+                                    : participation.Event.Title,
+                                EventDate = participation.Event == null
+                                    ? DateTime.MinValue
+                                    : participation.Event.EventDate,
+                                StatusText = participation.Event == null
+                                    ? "Неизвестно"
+                                    : GetEventStatusText(
+                                        participation.Event.Status),
+                                StatusCssClass = participation.Event == null
+                                    ? "text-bg-light"
+                                    : GetEventStatusCssClass(
+                                        participation.Event.Status)
+                            })
+                        .ToList()
+            };
+        }
+
+        private IActionResult RedirectAfterUserAction(
+            string targetUserId,
+            string? returnUrl)
+        {
+            if (!string.IsNullOrWhiteSpace(returnUrl) &&
+                Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+
+            return RedirectToAction(
+                nameof(ViewUser),
+                new
+                {
+                    id = targetUserId
+                });
+        }
+
+        private static string GetEventStatusText(
+            EventStatus status)
+        {
+            return status switch
+            {
+                EventStatus.Pending => "На модерации",
+                EventStatus.Approved => "Одобрено",
+                EventStatus.Rejected => "Отклонено",
+                EventStatus.Cancelled => "Отменено",
+                EventStatus.Completed => "Завершено",
+                _ => "Неизвестно"
+            };
+        }
+
+        private static string GetEventStatusCssClass(
+            EventStatus status)
+        {
+            return status switch
+            {
+                EventStatus.Pending => "text-bg-warning",
+                EventStatus.Approved => "text-bg-success",
+                EventStatus.Rejected => "text-bg-danger",
+                EventStatus.Cancelled => "text-bg-secondary",
+                EventStatus.Completed => "text-bg-info",
+                _ => "text-bg-light"
             };
         }
 

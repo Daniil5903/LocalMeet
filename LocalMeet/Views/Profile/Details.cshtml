@@ -1,7 +1,9 @@
 ﻿@model ProfileViewModel
 
 @{
-    ViewData["Title"] = "Профиль пользователя";
+    ViewData["Title"] = Model.IsOwnProfile
+        ? "Мой профиль"
+        : $"Профиль {Model.FullName}";
 
     var avatarPath = string.IsNullOrWhiteSpace(Model.AvatarPath)
         ? "/images/default-avatar.png"
@@ -10,7 +12,7 @@
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
 }
 
-<div class="profile-page">
+<div class="admin-page profile-page">
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success">
@@ -25,75 +27,71 @@
         </div>
     }
 
-    <div class="profile-header-card">
-        <div class="profile-header-left">
-            <img src="@avatarPath" alt="Аватар пользователя" class="profile-avatar" />
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="admin-card">
+                <div class="admin-user-profile">
+                    <img src="@avatarPath"
+                         alt="Аватар пользователя"
+                         class="admin-user-avatar" />
 
-            <div>
-                <h1 class="profile-name">
-                    @Model.FirstName @Model.LastName
-                </h1>
+                    <h2>@Model.FullName</h2>
 
-                <div class="profile-meta">
-                    Пользователь LocalMeet с @Model.RegistrationDate.ToString("dd.MM.yyyy")
+                    @if (Model.CanViewPrivateInfo)
+                    {
+                        <div class="text-muted">
+                            @Model.Email
+                        </div>
+                    }
+
+                    @if (Model.IsCurrentUserAdmin)
+                    {
+                        <div class="d-flex gap-2 justify-content-center flex-wrap mt-3">
+                            @if (Model.IsProfileUserAdmin)
+                            {
+                                <span class="badge text-bg-primary">
+                                    Admin
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-light">
+                                    User
+                                </span>
+                            }
+
+                            @if (Model.IsBlocked)
+                            {
+                                <span class="badge text-bg-danger">
+                                    Заблокирован
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-success">
+                                    Активен
+                                </span>
+                            }
+
+                            @if (Model.IsPrivateProfile)
+                            {
+                                <span class="badge text-bg-secondary">
+                                    Закрытый профиль
+                                </span>
+                            }
+                        </div>
+                    }
                 </div>
-
-                @if (Model.IsPrivateProfile && !Model.IsOwnProfile)
-                {
-                    <div class="badge bg-secondary mt-2">
-                        Закрытый профиль
-                    </div>
-                }
-
-                @if (Model.IsBlocked)
-                {
-                    <div class="badge bg-danger mt-2">
-                        Пользователь заблокирован
-                    </div>
-                }
-            </div>
-        </div>
-
-        <div class="d-flex gap-2 flex-wrap">
-            @if (Model.IsOwnProfile)
-            {
-                <a asp-controller="Profile" asp-action="Edit" class="btn btn-primary">
-                    Редактировать профиль
-                </a>
-            }
-            else
-            {
-                <a asp-area=""
-                   asp-controller="Reports"
-                   asp-action="CreateForUser"
-                   asp-route-userId="@Model.Id"
-                   asp-route-returnUrl="@returnUrl"
-                   class="btn btn-outline-danger">
-                    Пожаловаться
-                </a>
-            }
-        </div>
-    </div>
-
-    <div class="row g-4 mt-2">
-        <div class="col-lg-8">
-            <div class="profile-card">
-                <h2 class="profile-section-title">Информация</h2>
 
                 @if (Model.CanViewPrivateInfo)
                 {
-                    <div class="profile-info-list">
-                        <div class="profile-info-item">
-                            <span>Email</span>
-                            <strong>@Model.Email</strong>
-                        </div>
-
-                        <div class="profile-info-item">
+                    <div class="admin-info-list mt-4">
+                        <div>
                             <span>Дата регистрации</span>
                             <strong>@Model.RegistrationDate.ToString("dd.MM.yyyy HH:mm")</strong>
                         </div>
 
-                        <div class="profile-info-item">
+                        <div>
                             <span>Последний вход</span>
                             <strong>
                                 @(Model.LastVisit.HasValue
@@ -102,59 +100,249 @@
                         </strong>
                     </div>
                 </div>
+                                }
 
-                    <div class="mt-4">
-                        <h3 class="profile-subtitle">О себе</h3>
+                <div class="d-grid gap-2 mt-4">
+                    @if (Model.CanEditProfile)
+                    {
+                        <a asp-area=""
+                           asp-controller="Profile"
+                           asp-action="Edit"
+                           class="btn btn-primary">
+                            Редактировать профиль
+                        </a>
+                    }
 
-                    @if (!string.IsNullOrWhiteSpace(Model.About))
-                        {
-                            <p class="profile-about">
-                                @Model.About
-                            </p>
-                        }
-                        else
-                        {
-                            <p class="text-muted">
-                                Пользователь пока не добавил описание профиля.
-                            </p>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <div class="private-profile-box">
-                        <h3>Профиль закрыт</h3>
-                        <p>
-                            Пользователь ограничил отображение личной информации.
-                        </p>
-                    </div>
-                }
+                    @if (Model.CanReportUser)
+                    {
+                        <a asp-area=""
+                           asp-controller="Reports"
+                           asp-action="CreateForUser"
+                           asp-route-userId="@Model.Id"
+                           asp-route-returnUrl="@returnUrl"
+                           class="btn btn-outline-danger">
+                            Пожаловаться
+                        </a>
+                    }
+
+                    @if (Model.CanAdminBlockUser)
+                    {
+                        <form asp-area=""
+                              asp-controller="Profile"
+                              asp-action="BlockUser"
+                              asp-route-id="@Model.Id"
+                              method="post">
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden"
+                                   name="returnUrl"
+                                   value="@returnUrl" />
+
+                            <button type="submit"
+                                    class="btn btn-danger w-100">
+                                Заблокировать
+                            </button>
+                        </form>
+                    }
+
+                    @if (Model.CanAdminUnblockUser)
+                    {
+                        <form asp-area=""
+                              asp-controller="Profile"
+                              asp-action="UnblockUser"
+                              asp-route-id="@Model.Id"
+                              method="post">
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden"
+                                   name="returnUrl"
+                                   value="@returnUrl" />
+
+                            <button type="submit"
+                                    class="btn btn-success w-100">
+                                Разблокировать
+                            </button>
+                        </form>
+                    }
+
+                    @if (Model.IsCurrentUserAdmin &&
+                                        !Model.IsOwnProfile &&
+                                        Model.IsProfileUserAdmin)
+                    {
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                disabled>
+                            Администратора нельзя заблокировать
+                        </button>
+                    }
+
+                    @if (Model.IsCurrentUserAdmin)
+                    {
+                        <a asp-area="Admin"
+                           asp-controller="UserManagement"
+                           asp-action="Details"
+                           asp-route-id="@Model.Id"
+                           class="btn btn-outline-secondary">
+                            Открыть админ-карточку
+                        </a>
+                    }
+                </div>
             </div>
         </div>
 
-        <div class="col-lg-4">
-            <div class="profile-card">
-                <h2 class="profile-section-title">Статистика</h2>
-
-                @if (Model.CanViewPrivateInfo)
-                {
-                    <div class="profile-stat">
-                        <span>Создано мероприятий</span>
+        <div class="col-lg-8">
+            @if (Model.CanViewPrivateInfo)
+            {
+                <div class="admin-stats-grid mb-4">
+                    <div class="admin-stat-card">
+                        <span>Создано</span>
                         <strong>@Model.CreatedEventsCount</strong>
+                        <small>мероприятий</small>
                     </div>
 
-                    <div class="profile-stat">
-                        <span>Участий в мероприятиях</span>
+                    <div class="admin-stat-card">
+                        <span>Участия</span>
                         <strong>@Model.ParticipatedEventsCount</strong>
+                        <small>регистраций</small>
                     </div>
-                }
-                else
-                {
-                    <p class="text-muted mb-0">
-                        Статистика скрыта настройками приватности.
-                    </p>
-                }
-            </div>
+
+                    <div class="admin-stat-card">
+                        <span>Избранное</span>
+                        <strong>@Model.FavoriteEventsCount</strong>
+                        <small>мероприятий</small>
+                    </div>
+
+                    <div class="admin-stat-card">
+                        <span>Сообщения</span>
+                        <strong>@Model.MessagesCount</strong>
+                        <small>в чатах</small>
+                    </div>
+                </div>
+
+                <div class="admin-card mb-4">
+                    <h2 class="admin-section-title">О пользователе</h2>
+
+                    @if (string.IsNullOrWhiteSpace(Model.About))
+                    {
+                        <div class="text-muted">
+                            Пользователь пока не заполнил описание профиля.
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="profile-about mb-0">
+                            @Model.About
+                        </p>
+                    }
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-xl-6">
+                        <div class="admin-card h-100">
+                            <h2 class="admin-section-title">
+                                Последние созданные мероприятия
+                            </h2>
+
+                            @if (!Model.RecentCreatedEvents.Any())
+                            {
+                                <div class="text-muted">
+                                    Нет созданных мероприятий.
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="admin-compact-list">
+                                    @foreach (var item in Model.RecentCreatedEvents)
+                                    {
+                                        <div class="admin-compact-item">
+                                            <div>
+                                                <a asp-area=""
+                                                   asp-controller="Events"
+                                                   asp-action="Details"
+                                                   asp-route-id="@item.Id"
+                                                   class="fw-bold">
+                                                    @item.Title
+                                                </a>
+
+                                                <div class="text-muted small">
+                                                    @item.EventDate.ToString("dd.MM.yyyy HH:mm")
+                                                </div>
+                                            </div>
+
+                                            @if (Model.IsCurrentUserAdmin || Model.IsOwnProfile)
+                                            {
+                                                <span class="badge @item.StatusCssClass">
+                                                    @item.StatusText
+                                                </span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-xl-6">
+                        <div class="admin-card h-100">
+                            <h2 class="admin-section-title">
+                                Последние участия
+                            </h2>
+
+                            @if (!Model.RecentParticipations.Any())
+                            {
+                                <div class="text-muted">
+                                    Нет регистраций на мероприятия.
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="admin-compact-list">
+                                    @foreach (var item in Model.RecentParticipations)
+                                    {
+                                        <div class="admin-compact-item">
+                                            <div>
+                                                <a asp-area=""
+                                                   asp-controller="Events"
+                                                   asp-action="Details"
+                                                   asp-route-id="@item.Id"
+                                                   class="fw-bold">
+                                                    @item.Title
+                                                </a>
+
+                                                <div class="text-muted small">
+                                                    @(item.EventDate == DateTime.MinValue
+                                                                                            ? "Дата не указана"
+                                                                                            : item.EventDate.ToString("dd.MM.yyyy HH:mm"))
+                                    </div>
+                                </div>
+
+                                @if (Model.IsCurrentUserAdmin || Model.IsOwnProfile)
+                                            {
+                                                <span class="badge @item.StatusCssClass">
+                                                    @item.StatusText
+                                                </span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="admin-card">
+                    <div class="private-profile-box mb-0">
+                        <h2>Профиль закрыт</h2>
+
+                        <p>
+                            Пользователь ограничил отображение личной информации.
+                            Вы можете видеть только основную карточку профиля.
+                        </p>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </div>
