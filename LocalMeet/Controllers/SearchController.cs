@@ -36,10 +36,12 @@ namespace LocalMeet.Controllers
             }
 
             var normalizedQuery = query.Trim();
+
             var currentUser = await _userManager.GetUserAsync(User);
             var favoriteEventIds = await GetFavoriteEventIdsAsync(currentUser);
 
             var eventEntities = await _context.Events
+                .AsNoTracking()
                 .Include(e => e.Category)
                 .Include(e => e.Creator)
                 .Include(e => e.Participations)
@@ -48,7 +50,8 @@ namespace LocalMeet.Controllers
                     (e.Title.Contains(normalizedQuery) ||
                      e.Description.Contains(normalizedQuery) ||
                      e.Address.Contains(normalizedQuery) ||
-                     (e.Category != null && e.Category.Name.Contains(normalizedQuery))))
+                     (e.Category != null &&
+                      e.Category.Name.Contains(normalizedQuery))))
                 .OrderBy(e => e.EventDate)
                 .Take(12)
                 .ToListAsync();
@@ -69,21 +72,29 @@ namespace LocalMeet.Controllers
                     Status = e.Status,
                     StatusText = GetStatusText(e.Status),
                     StatusCssClass = GetStatusCssClass(e.Status),
-                    CategoryName = e.Category != null ? e.Category.Name : "Без категории",
+                    CanViewStatus = false,
+                    CategoryName = e.Category != null
+                        ? e.Category.Name
+                        : "Без категории",
                     CreatorName = e.Creator != null
                         ? e.Creator.FirstName + " " + e.Creator.LastName
                         : "Неизвестный пользователь",
                     IsFavorite = favoriteEventIds.Contains(e.Id),
-                    CanToggleFavorite = currentUser != null && !currentUser.IsBlocked
+                    CanToggleFavorite = currentUser != null &&
+                                        !currentUser.IsBlocked
                 })
                 .ToList();
 
             model.Users = await _context.Users
+                .AsNoTracking()
                 .Where(u =>
                     !u.IsBlocked &&
                     (u.FirstName.Contains(normalizedQuery) ||
                      u.LastName.Contains(normalizedQuery) ||
-                     u.Email!.Contains(normalizedQuery)))
+                     (u.Email != null &&
+                      u.Email.Contains(normalizedQuery)) ||
+                     (u.About != null &&
+                      u.About.Contains(normalizedQuery))))
                 .OrderBy(u => u.LastName)
                 .ThenBy(u => u.FirstName)
                 .Take(12)
@@ -100,15 +111,152 @@ namespace LocalMeet.Controllers
                 })
                 .ToListAsync();
 
-            foreach (var user in model.Users.Where(u => u.AboutPreview != null && u.AboutPreview.Length > 120))
+            foreach (var user in model.Users
+                         .Where(u =>
+                             u.AboutPreview != null &&
+                             u.AboutPreview.Length > 120))
             {
-                user.AboutPreview = user.AboutPreview![..120] + "...";
+                user.AboutPreview =
+                    user.AboutPreview![..120] + "...";
             }
 
             return View(model);
         }
 
-        private async Task<HashSet<int>> GetFavoriteEventIdsAsync(User? currentUser)
+        [HttpGet]
+        public async Task<IActionResult> Autocomplete(string? query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return Json(new
+                {
+                    items = Array.Empty<object>(),
+                    totalCount = 0
+                });
+            }
+
+            var normalizedQuery = query.Trim();
+
+            if (normalizedQuery.Length < 2)
+            {
+                return Json(new
+                {
+                    items = Array.Empty<object>(),
+                    totalCount = 0
+                });
+            }
+
+            var items = new List<object>();
+
+            var events = await _context.Events
+                .AsNoTracking()
+                .Include(e => e.Category)
+                .Where(e =>
+                    e.Status == EventStatus.Approved &&
+                    (e.Title.Contains(normalizedQuery) ||
+                     e.Description.Contains(normalizedQuery) ||
+                     e.Address.Contains(normalizedQuery) ||
+                     (e.Category != null &&
+                      e.Category.Name.Contains(normalizedQuery))))
+                .OrderBy(e => e.EventDate)
+                .Take(5)
+                .Select(e => new
+                {
+                    e.Id,
+                    e.Title,
+                    e.EventDate,
+                    e.Address,
+                    CategoryName = e.Category != null
+                        ? e.Category.Name
+                        : "Без категории"
+                })
+                .ToListAsync();
+
+            foreach (var eventItem in events)
+            {
+                items.Add(new
+                {
+                    type = "event",
+                    typeText = "Мероприятие",
+                    title = eventItem.Title,
+                    subtitle = $"{eventItem.CategoryName} • {eventItem.EventDate:dd.MM.yyyy HH:mm}",
+                    meta = eventItem.Address,
+                    url = Url.Action(
+                        "Details",
+                        "Events",
+                        new
+                        {
+                            id = eventItem.Id
+                        }) ?? $"/Events/Details/{eventItem.Id}",
+                    avatarPath = "",
+                    badge = eventItem.CategoryName
+                });
+            }
+
+            var users = await _context.Users
+                .AsNoTracking()
+                .Where(u =>
+                    !u.IsBlocked &&
+                    (u.FirstName.Contains(normalizedQuery) ||
+                     u.LastName.Contains(normalizedQuery) ||
+                     (u.Email != null &&
+                      u.Email.Contains(normalizedQuery)) ||
+                     (u.About != null &&
+                      u.About.Contains(normalizedQuery))))
+                .OrderBy(u => u.LastName)
+                .ThenBy(u => u.FirstName)
+                .Take(5)
+                .Select(u => new
+                {
+                    u.Id,
+                    u.FirstName,
+                    u.LastName,
+                    u.AvatarPath,
+                    u.About,
+                    u.IsPrivateProfile
+                })
+                .ToListAsync();
+
+            foreach (var user in users)
+            {
+                var subtitle = user.IsPrivateProfile
+                    ? "Профиль пользователя"
+                    : TrimPreview(
+                        string.IsNullOrWhiteSpace(user.About)
+                            ? "Пользователь LocalMeet"
+                            : user.About,
+                        80);
+
+                items.Add(new
+                {
+                    type = "user",
+                    typeText = "Пользователь",
+                    title = $"{user.FirstName} {user.LastName}",
+                    subtitle,
+                    meta = "",
+                    url = Url.Action(
+                        "ViewUser",
+                        "Profile",
+                        new
+                        {
+                            id = user.Id
+                        }) ?? $"/Profile/User/{user.Id}",
+                    avatarPath = string.IsNullOrWhiteSpace(user.AvatarPath)
+                        ? "/images/default-avatar.png"
+                        : user.AvatarPath,
+                    badge = "Профиль"
+                });
+            }
+
+            return Json(new
+            {
+                items,
+                totalCount = items.Count
+            });
+        }
+
+        private async Task<HashSet<int>> GetFavoriteEventIdsAsync(
+            User? currentUser)
         {
             if (currentUser == null)
             {
@@ -121,6 +269,22 @@ namespace LocalMeet.Controllers
                 .ToListAsync();
 
             return favoriteIds.ToHashSet();
+        }
+
+        private static string TrimPreview(
+            string text,
+            int maxLength)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            var normalizedText = text.Trim();
+
+            return normalizedText.Length > maxLength
+                ? normalizedText.Substring(0, maxLength) + "..."
+                : normalizedText;
         }
 
         private static string GetStatusText(EventStatus status)
@@ -140,12 +304,12 @@ namespace LocalMeet.Controllers
         {
             return status switch
             {
-                EventStatus.Pending => "bg-warning text-dark",
-                EventStatus.Approved => "bg-success",
-                EventStatus.Rejected => "bg-danger",
-                EventStatus.Cancelled => "bg-secondary",
-                EventStatus.Completed => "bg-primary",
-                _ => "bg-light text-dark"
+                EventStatus.Pending => "text-bg-warning",
+                EventStatus.Approved => "text-bg-success",
+                EventStatus.Rejected => "text-bg-danger",
+                EventStatus.Cancelled => "text-bg-secondary",
+                EventStatus.Completed => "text-bg-info",
+                _ => "text-bg-light"
             };
         }
     }

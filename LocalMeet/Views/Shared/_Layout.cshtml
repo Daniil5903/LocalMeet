@@ -14,7 +14,7 @@
 
                 document.documentElement.setAttribute("data-theme", theme);
                 document.documentElement.setAttribute("data-bs-theme", theme);
-            } catch {
+            } catch (error) {
                 document.documentElement.setAttribute("data-theme", "dark");
                 document.documentElement.setAttribute("data-bs-theme", "dark");
             }
@@ -32,23 +32,44 @@
           href="~/css/theme.css"
           asp-append-version="true" />
 
+    <link rel="stylesheet"
+          href="~/css/layout-search.css"
+          asp-append-version="true" />
+
     @await RenderSectionAsync("Styles", required: false)
 </head>
 
 <body>
     <header class="app-header">
         <nav class="navbar navbar-expand-lg app-navbar">
-            <div class="container">
-                <a class="navbar-brand app-brand"
+            <div class="container app-navbar-container">
+                <a class="navbar-brand app-brand app-brand-icon-only"
                    asp-area=""
                    asp-controller="Home"
-                   asp-action="Index">
+                   asp-action="Index"
+                   aria-label="LocalMeet">
 
-                    <span class="app-brand-mark">
-                        <span></span>
+                    <span class="app-brand-logo" aria-hidden="true">
+                        <svg viewBox="0 0 48 48"
+                             fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <rect x="6"
+                                  y="6"
+                                  width="36"
+                                  height="36"
+                                  rx="13" />
+
+                            <path d="M24 13.5C19.58 13.5 16 17.08 16 21.5C16 27.6 24 35 24 35C24 35 32 27.6 32 21.5C32 17.08 28.42 13.5 24 13.5Z" />
+
+                            <circle cx="24"
+                                    cy="21.5"
+                                    r="3.2" />
+                        </svg>
                     </span>
 
-                    <span>LocalMeet</span>
+                    <span class="visually-hidden">
+                        LocalMeet
+                    </span>
                 </a>
 
                 <button class="navbar-toggler app-navbar-toggler"
@@ -58,12 +79,13 @@
                         aria-controls="mainNavbar"
                         aria-expanded="false"
                         aria-label="Открыть меню">
-
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
-                <div class="collapse navbar-collapse" id="mainNavbar">
-                    <ul class="navbar-nav me-auto app-nav">
+                <div class="collapse navbar-collapse app-navbar-collapse"
+                     id="mainNavbar">
+
+                    <ul class="navbar-nav app-nav">
                         <li class="nav-item">
                             <a class="nav-link app-nav-link"
                                asp-area=""
@@ -85,48 +107,47 @@
                         <li class="nav-item">
                             <a class="nav-link app-nav-link"
                                asp-area=""
-                               asp-controller="Search"
-                               asp-action="Index">
-                                Поиск
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link app-nav-link"
-                               asp-area=""
                                asp-controller="Events"
                                asp-action="Create">
-                                Создать мероприятие
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link app-nav-link"
-                               asp-area=""
-                               asp-controller="MyEvents"
-                               asp-action="Index">
-                                Мои мероприятия
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link app-nav-link"
-                               asp-area=""
-                               asp-controller="Favorites"
-                               asp-action="Index">
-                                Избранное
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link app-nav-link"
-                               asp-area=""
-                               asp-controller="Notifications"
-                               asp-action="Index">
-                                Уведомления
+                                Создать
                             </a>
                         </li>
                     </ul>
+
+                    <div class="app-header-search-wrapper">
+                        <form class="app-header-search"
+                              asp-area=""
+                              asp-controller="Search"
+                              asp-action="Index"
+                              method="get"
+                              autocomplete="off"
+                              data-header-search-form>
+
+                            <label class="visually-hidden"
+                                   for="headerSearchInput">
+                                Поиск мероприятий и пользователей
+                            </label>
+
+                            <input id="headerSearchInput"
+                                   class="form-control app-header-search-input"
+                                   type="search"
+                                   name="query"
+                                   maxlength="80"
+                                   placeholder="Поиск мероприятий и пользователей"
+                                   data-header-search-input
+                                   data-search-url="@Url.Action("Autocomplete", "Search")" />
+
+                            <button class="app-header-search-button"
+                                    type="submit"
+                                    aria-label="Найти">
+                                <span aria-hidden="true">⌕</span>
+                            </button>
+
+                            <div class="app-header-search-results"
+                                 data-header-search-results
+                                 aria-live="polite"></div>
+                        </form>
+                    </div>
 
                     <div class="app-navbar-actions">
                         <button type="button"
