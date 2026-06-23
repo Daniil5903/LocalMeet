@@ -396,3 +396,137 @@
             white-space: normal;
         }
 }
+/* =========================================================
+   Переключатель темы внутри дропдауна профиля
+   ========================================================= */
+
+.theme-menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-width: 260px;
+    padding: 10px 12px;
+}
+
+.theme-menu-label {
+    color: var(--lm-text-soft);
+    font-size: 0.94rem;
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+.theme-switch {
+    position: relative;
+    width: 64px;
+    min-width: 64px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.theme-switch-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.theme-switch-track {
+    position: relative;
+    width: 64px;
+    height: 34px;
+    display: block;
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    border-radius: 999px;
+    background: radial-gradient( circle at 22% 50%, rgba(251, 191, 36, 0.45), transparent 30% ), linear-gradient( 135deg, #e0f2fe, #93c5fd );
+    box-shadow: inset 0 2px 6px rgba(15, 23, 42, 0.16), 0 8px 18px rgba(37, 99, 235, 0.16);
+    transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+.theme-switch-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    z-index: 2;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #f59e0b;
+    box-shadow: 0 5px 12px rgba(15, 23, 42, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.2, 1.15), background-color 0.35s ease, color 0.35s ease;
+}
+
+.theme-switch-icon {
+    position: absolute;
+    font-size: 15px;
+    line-height: 1;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.theme-switch-icon-sun {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+.theme-switch-icon-moon {
+    opacity: 0;
+    transform: rotate(-70deg) scale(0.5);
+}
+
+.theme-switch-stars {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    background: radial-gradient(circle at 18% 30%, #ffffff 0 1px, transparent 2px), radial-gradient(circle at 36% 68%, #ffffff 0 1px, transparent 2px), radial-gradient(circle at 58% 22%, #ffffff 0 1.2px, transparent 2.4px), radial-gradient(circle at 79% 62%, #ffffff 0 1px, transparent 2px);
+    transform: translateY(4px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.theme-switch-input:checked + .theme-switch-track {
+    border-color: rgba(96, 165, 250, 0.65);
+    background: radial-gradient( circle at 78% 50%, rgba(96, 165, 250, 0.28), transparent 32% ), linear-gradient( 135deg, #111827, #1e3a8a );
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.35), 0 8px 20px rgba(59, 130, 246, 0.24);
+}
+
+    .theme-switch-input:checked + .theme-switch-track .theme-switch-thumb {
+        transform: translateX(30px);
+        background: #dbeafe;
+        color: #1e3a8a;
+    }
+
+    .theme-switch-input:checked + .theme-switch-track .theme-switch-icon-sun {
+        opacity: 0;
+        transform: rotate(70deg) scale(0.5);
+    }
+
+    .theme-switch-input:checked + .theme-switch-track .theme-switch-icon-moon {
+        opacity: 1;
+        transform: rotate(0deg) scale(1);
+    }
+
+    .theme-switch-input:checked + .theme-switch-track .theme-switch-stars {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+.theme-switch-input:focus-visible + .theme-switch-track {
+    outline: 3px solid var(--lm-primary-soft);
+    outline-offset: 3px;
+}
+
+.theme-switch:hover .theme-switch-thumb {
+    box-shadow: 0 7px 16px rgba(15, 23, 42, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+@media (max-width: 575px) {
+    .theme-menu-item {
+        min-width: 230px;
+    }
+}

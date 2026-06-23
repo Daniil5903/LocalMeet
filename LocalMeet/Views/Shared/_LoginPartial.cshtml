@@ -40,16 +40,17 @@
         ? "99+"
         : newReportsCount.ToString();
 
-    <div class="dropdown">
+    <div class="dropdown user-menu-dropdown">
         <button class="btn user-menu-button dropdown-toggle"
                 type="button"
                 data-bs-toggle="dropdown"
+                data-bs-auto-close="outside"
                 aria-expanded="false">
             <img src="@avatarPath"
                  alt="Аватар"
                  class="user-menu-avatar" />
 
-            <span>@currentUser?.FirstName</span>
+            <span class="user-menu-name">@currentUser?.FirstName</span>
 
             @if (totalHeaderCounter > 0)
             {
@@ -186,6 +187,40 @@
             </li>
 
             <li>
+                <div class="theme-menu-item">
+                    <span class="theme-menu-label">
+                        Темная тема
+                    </span>
+
+                    <label class="theme-switch"
+                           title="Переключить тему">
+                        <input type="checkbox"
+                               class="theme-switch-input"
+                               data-theme-switch
+                               aria-label="Темная тема" />
+
+                        <span class="theme-switch-track">
+                            <span class="theme-switch-stars"></span>
+
+                            <span class="theme-switch-thumb">
+                                <span class="theme-switch-icon theme-switch-icon-sun">
+                                    ☀
+                                </span>
+
+                                <span class="theme-switch-icon theme-switch-icon-moon">
+                                    ☾
+                                </span>
+                            </span>
+                        </span>
+                    </label>
+                </div>
+            </li>
+
+            <li>
+                <hr class="dropdown-divider" />
+            </li>
+
+            <li>
                 <form asp-area=""
                       asp-controller="Account"
                       asp-action="Logout"
@@ -202,18 +237,18 @@
 }
 else
 {
-    <div class="d-flex gap-2">
+    <div class="app-auth-links d-flex gap-2">
         <a asp-area=""
            asp-controller="Account"
            asp-action="Login"
-           class="btn btn-outline-primary">
+           class="btn btn-outline-primary app-login-link">
             Войти
         </a>
 
         <a asp-area=""
            asp-controller="Account"
            asp-action="Register"
-           class="btn btn-primary">
+           class="btn btn-primary app-register-link">
             Регистрация
         </a>
     </div>

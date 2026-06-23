@@ -16,10 +16,20 @@
             // localStorage может быть недоступен в некоторых режимах браузера.
         }
 
+        syncThemeControls(theme);
+    }
+
+    function syncThemeControls(theme) {
         var icons = document.querySelectorAll("[data-theme-icon]");
 
         for (var i = 0; i < icons.length; i++) {
             icons[i].textContent = theme === "dark" ? "☀" : "☾";
+        }
+
+        var switches = document.querySelectorAll("[data-theme-switch]");
+
+        for (var j = 0; j < switches.length; j++) {
+            switches[j].checked = theme === "dark";
         }
     }
 
@@ -33,6 +43,58 @@
                 setTheme(getTheme() === "dark" ? "light" : "dark");
             });
         }
+
+        var themeSwitches = document.querySelectorAll("[data-theme-switch]");
+
+        for (var j = 0; j < themeSwitches.length; j++) {
+            themeSwitches[j].addEventListener("change", function () {
+                setTheme(this.checked ? "dark" : "light");
+            });
+        }
+    }
+
+    function initFixedHeaderOffset() {
+        var header = document.querySelector(".app-header");
+
+        if (!header) {
+            return;
+        }
+
+        function updateHeaderOffset() {
+            var height = header.offsetHeight;
+
+            if (!height || height < 50) {
+                height = 64;
+            }
+
+            root.style.setProperty(
+                "--app-header-offset",
+                height + "px"
+            );
+        }
+
+        updateHeaderOffset();
+
+        window.addEventListener("resize", function () {
+            window.requestAnimationFrame(updateHeaderOffset);
+        });
+
+        window.addEventListener("orientationchange", function () {
+            window.setTimeout(updateHeaderOffset, 250);
+        });
+
+        window.addEventListener("load", function () {
+            updateHeaderOffset();
+            window.setTimeout(updateHeaderOffset, 250);
+        });
+
+        document.addEventListener("shown.bs.collapse", function () {
+            window.setTimeout(updateHeaderOffset, 50);
+        });
+
+        document.addEventListener("hidden.bs.collapse", function () {
+            window.setTimeout(updateHeaderOffset, 50);
+        });
     }
 
     function initRevealAnimation() {
@@ -278,6 +340,7 @@
 
     document.addEventListener("DOMContentLoaded", function () {
         initThemeToggle();
+        initFixedHeaderOffset();
         initRevealAnimation();
         initHeaderSearch();
     });

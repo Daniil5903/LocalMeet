@@ -1,0 +1,1212 @@
+/* =========================================================
+   LocalMeet — адаптивность и мобильная версия
+   Подключается последним после site.css, theme.css и layout-search.css
+   ========================================================= */
+
+/* Базовая защита от горизонтального скролла */
+
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+img,
+svg,
+video,
+canvas,
+iframe {
+    max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+input,
+select,
+textarea {
+    font-size: 16px;
+}
+
+/* =========================================================
+   Общие сетки и контейнеры
+   ========================================================= */
+
+.app-main {
+    width: 100%;
+}
+
+.row {
+    min-width: 0;
+}
+
+[class*="col-"] {
+    min-width: 0;
+}
+
+.admin-card,
+.admin-form-card,
+.profile-card,
+.profile-edit-card,
+.event-card,
+.event-create-card,
+.event-details-card,
+.events-filter-card,
+.notification-card,
+.report-form-card,
+.auth-card {
+    min-width: 0;
+}
+
+/* =========================================================
+   Планшеты и небольшие ноутбуки
+   ========================================================= */
+
+@media (max-width: 1199px) {
+    .container {
+        max-width: 100%;
+        padding-left: 22px;
+        padding-right: 22px;
+    }
+
+    .events-hero,
+    .event-details-header,
+    .admin-header {
+        gap: 18px;
+    }
+
+    .admin-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* =========================================================
+   Вертикальные планшеты и крупные телефоны
+   ========================================================= */
+
+@media (max-width: 991px) {
+    body {
+        min-width: 320px;
+    }
+
+    .container {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .app-main {
+        padding-top: 24px;
+        padding-bottom: 32px;
+    }
+
+    .app-header {
+        position: sticky;
+    }
+
+    .app-navbar {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .app-navbar-container {
+        align-items: center;
+    }
+
+    .app-navbar-collapse {
+        width: 100%;
+    }
+
+    .app-nav {
+        padding-top: 8px;
+    }
+
+    .app-nav-link {
+        min-height: 42px;
+        display: flex !important;
+        align-items: center;
+        border-radius: 12px;
+    }
+
+    .app-navbar-actions {
+        gap: 12px;
+    }
+
+    .user-menu-button {
+        max-width: calc(100vw - 110px);
+        overflow: hidden;
+    }
+
+        .user-menu-button span:not(.badge) {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+    .dropdown-menu {
+        max-width: calc(100vw - 36px);
+    }
+
+    .events-hero,
+    .event-details-header,
+    .admin-header {
+        flex-direction: column;
+        align-items: stretch !important;
+        text-align: left;
+    }
+
+        .events-hero > div,
+        .event-details-header > div,
+        .admin-header > div {
+            width: 100%;
+        }
+
+        .events-hero h1,
+        .event-details-header h1,
+        .admin-header h1 {
+            font-size: clamp(1.9rem, 5vw, 2.6rem);
+        }
+
+        .events-hero p,
+        .event-details-header p,
+        .admin-header p {
+            max-width: 100%;
+        }
+
+    .events-filter-card form,
+    .admin-filter-form,
+    .search-form,
+    .event-filter-form {
+        grid-template-columns: 1fr !important;
+    }
+
+    .event-card {
+        height: auto;
+    }
+
+    .event-card-footer,
+    .event-card-actions {
+        align-items: stretch;
+    }
+
+    .event-card-footer {
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .event-card-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+        .event-card-actions .btn,
+        .event-card-actions form {
+            flex: 1 1 auto;
+        }
+
+            .event-card-actions form .btn {
+                width: 100%;
+            }
+
+    .event-details-info,
+    .event-info-list,
+    .report-info-list,
+    .admin-info-list {
+        grid-template-columns: 1fr !important;
+    }
+
+    .event-details-card,
+    .event-create-card,
+    .admin-card,
+    .admin-form-card,
+    .profile-edit-card,
+    .auth-card {
+        padding: 22px;
+    }
+
+    .event-map {
+        min-height: 320px;
+    }
+
+    .event-chat-message {
+        grid-template-columns: 40px minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    .event-chat-actions {
+        grid-column: 2;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .event-chat-form .d-flex {
+        align-items: stretch !important;
+    }
+
+    .event-chat-form .btn {
+        width: 100%;
+    }
+
+    .admin-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-compact-item {
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .notifications-list {
+        gap: 14px;
+    }
+
+    .notification-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+    }
+
+    .notification-actions {
+        width: 100%;
+        flex-direction: row;
+        justify-content: stretch;
+    }
+
+        .notification-actions form,
+        .notification-actions .btn {
+            width: 100%;
+        }
+
+    .profile-page .admin-user-profile {
+        text-align: center;
+    }
+
+    .profile-page .admin-user-avatar,
+    .admin-user-avatar {
+        width: 118px;
+        height: 118px;
+    }
+
+    .participants-list {
+        gap: 10px;
+    }
+
+    .participant-item {
+        align-items: flex-start;
+    }
+
+    .table-responsive,
+    .admin-table-wrapper,
+    .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .admin-card .table,
+    .admin-form-card .table,
+    .events-filter-card .table {
+        min-width: 720px;
+    }
+}
+
+/* =========================================================
+   Телефоны
+   ========================================================= */
+
+@media (max-width: 767px) {
+    .container {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .app-main {
+        padding-top: 20px;
+    }
+
+    h1,
+    .events-hero h1,
+    .event-details-header h1,
+    .admin-header h1 {
+        font-size: clamp(1.65rem, 8vw, 2.2rem);
+        line-height: 1.08;
+    }
+
+    h2,
+    .admin-section-title,
+    .profile-section-title {
+        font-size: 1.28rem;
+    }
+
+    .events-hero,
+    .event-details-header,
+    .admin-header,
+    .auth-card,
+    .profile-card,
+    .profile-header-card,
+    .profile-edit-card,
+    .event-card,
+    .event-create-card,
+    .event-details-card,
+    .events-filter-card,
+    .admin-card,
+    .admin-form-card,
+    .notification-card,
+    .report-form-card,
+    .empty-events-box {
+        border-radius: 18px;
+    }
+
+    .events-hero,
+    .event-details-header,
+    .admin-header,
+    .event-details-card,
+    .event-create-card,
+    .admin-card,
+    .admin-form-card,
+    .profile-edit-card,
+    .auth-card,
+    .empty-events-box {
+        padding: 18px;
+    }
+
+    .event-card {
+        padding: 18px;
+    }
+
+        .event-card h2 {
+            font-size: 1.22rem;
+        }
+
+    .event-card-header,
+    .event-details-badges {
+        gap: 8px;
+    }
+
+    .badge {
+        max-width: 100%;
+        white-space: normal;
+        text-align: center;
+    }
+
+    .btn {
+        min-height: 42px;
+    }
+
+    .d-flex.gap-2.flex-wrap,
+    .d-flex.gap-3.flex-wrap {
+        width: 100%;
+    }
+
+        .d-flex.gap-2.flex-wrap > .btn,
+        .d-flex.gap-3.flex-wrap > .btn,
+        .d-flex.gap-2.flex-wrap > form,
+        .d-flex.gap-3.flex-wrap > form {
+            flex: 1 1 auto;
+        }
+
+            .d-flex.gap-2.flex-wrap > form .btn,
+            .d-flex.gap-3.flex-wrap > form .btn {
+                width: 100%;
+            }
+
+    .form-control,
+    .form-select {
+        min-height: 46px;
+    }
+
+    textarea.form-control {
+        min-height: 125px;
+    }
+
+    .event-map {
+        min-height: 280px;
+        border-radius: 16px;
+    }
+
+    .event-creator-box {
+        align-items: flex-start;
+    }
+
+        .event-creator-box img,
+        .participant-item img,
+        .event-chat-avatar {
+            width: 42px;
+            height: 42px;
+        }
+
+    .event-chat-messages {
+        max-height: 420px;
+        padding: 12px;
+    }
+
+    .event-chat-message {
+        padding: 12px;
+    }
+
+    .event-chat-message-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 3px;
+    }
+
+    .event-chat-message-text {
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+
+    .admin-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-stat-card {
+        min-height: auto;
+    }
+
+    .admin-compact-item {
+        flex-direction: column;
+    }
+
+        .admin-compact-item .badge {
+            align-self: flex-start;
+        }
+
+    .notification-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .notification-actions {
+        flex-direction: column;
+    }
+
+    .search-user-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+        .search-user-card img {
+            width: 70px;
+            height: 70px;
+        }
+
+    .pagination-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+    }
+
+    .pagination {
+        flex-wrap: nowrap;
+        min-width: max-content;
+    }
+
+    .app-footer .container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        text-align: left;
+    }
+}
+
+/* =========================================================
+   Маленькие телефоны
+   ========================================================= */
+
+@media (max-width: 575px) {
+    .container {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .app-navbar {
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    .app-brand-icon-only {
+        width: 42px;
+        min-width: 42px;
+        height: 42px;
+    }
+
+    .app-brand-logo {
+        width: 38px;
+        height: 38px;
+    }
+
+    .navbar-toggler {
+        width: 42px;
+        height: 42px;
+        padding: 6px;
+        border-radius: 12px;
+    }
+
+    .theme-toggle {
+        width: 40px;
+        height: 40px;
+    }
+
+    .user-menu-button {
+        min-height: 40px;
+        padding: 6px 9px;
+        border-radius: 999px;
+    }
+
+    .user-menu-avatar {
+        width: 30px;
+        height: 30px;
+    }
+
+    .app-header-search-input {
+        padding-right: 48px;
+    }
+
+    .app-header-search-results {
+        border-radius: 16px;
+    }
+
+    .app-header-search-item {
+        align-items: flex-start;
+    }
+
+    .app-header-search-item-content {
+        width: 100%;
+    }
+
+    .app-header-search-item-type {
+        align-self: flex-start;
+    }
+
+    .events-hero,
+    .event-details-header,
+    .admin-header,
+    .event-details-card,
+    .event-create-card,
+    .admin-card,
+    .admin-form-card,
+    .profile-edit-card,
+    .auth-card,
+    .empty-events-box {
+        padding: 16px;
+    }
+
+    .event-card {
+        padding: 16px;
+    }
+
+    .event-info-list div,
+    .event-details-info div,
+    .report-info-list div,
+    .admin-info-list div {
+        padding: 13px;
+    }
+
+    .event-card-actions {
+        flex-direction: column;
+    }
+
+        .event-card-actions .btn,
+        .event-card-actions form,
+        .event-card-actions form .btn {
+            width: 100%;
+        }
+
+    .event-details-header .d-flex,
+    .admin-header .d-flex {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .event-details-header .btn,
+    .admin-header .btn {
+        width: 100%;
+    }
+
+    .event-map {
+        min-height: 240px;
+    }
+
+    .participants-list {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .participant-item {
+        width: 100%;
+    }
+
+    .event-chat-messages {
+        max-height: 360px;
+    }
+
+    .event-chat-message {
+        grid-template-columns: 34px minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .event-chat-avatar {
+        width: 34px;
+        height: 34px;
+    }
+
+    .event-chat-actions {
+        grid-column: 1 / -1;
+    }
+
+    .profile-page .admin-user-avatar,
+    .admin-user-avatar {
+        width: 104px;
+        height: 104px;
+    }
+
+    .admin-stat-card strong {
+        font-size: 2rem;
+    }
+
+    .auth-card {
+        margin-top: 10px;
+    }
+
+        .auth-card .btn,
+        .profile-edit-card .btn,
+        .event-create-card .btn,
+        .admin-form-card .btn {
+            width: 100%;
+        }
+
+    .modal-dialog {
+        margin: 12px;
+    }
+
+    .modal-content {
+        border-radius: 18px;
+    }
+}
+
+/* =========================================================
+   Очень узкие экраны
+   ========================================================= */
+
+@media (max-width: 420px) {
+    .container {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .app-main {
+        padding-top: 16px;
+    }
+
+    .app-navbar-actions {
+        gap: 8px;
+    }
+
+    .user-menu-button span:not(.badge) {
+        max-width: 92px;
+    }
+
+    .dropdown-menu {
+        font-size: 0.92rem;
+    }
+
+    .app-header-search-input {
+        font-size: 0.9rem;
+    }
+
+    .events-hero,
+    .event-details-header,
+    .admin-header,
+    .event-details-card,
+    .event-create-card,
+    .admin-card,
+    .admin-form-card,
+    .profile-edit-card,
+    .auth-card,
+    .empty-events-box,
+    .event-card {
+        padding: 14px;
+        border-radius: 16px;
+    }
+
+    .badge {
+        font-size: 0.72rem;
+        padding: 6px 9px;
+    }
+
+    .btn {
+        font-size: 0.92rem;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .event-info-list div,
+    .event-details-info div,
+    .report-info-list div,
+    .admin-info-list div {
+        padding: 12px;
+    }
+
+    .event-card h2 {
+        font-size: 1.12rem;
+    }
+
+    .event-description,
+    .event-details-description,
+    .profile-about,
+    .report-description {
+        font-size: 0.94rem;
+    }
+
+    .event-map {
+        min-height: 220px;
+    }
+
+    .page-link {
+        padding: 8px 11px;
+    }
+}
+
+/* =========================================================
+   Горизонтальная ориентация телефона
+   ========================================================= */
+
+@media (max-height: 520px) and (orientation: landscape) {
+    .app-header {
+        position: static;
+    }
+
+    .event-chat-messages {
+        max-height: 260px;
+    }
+
+    .app-main {
+        padding-top: 16px;
+    }
+}
+
+/* =========================================================
+   Сенсорные устройства
+   ========================================================= */
+
+@media (hover: none) and (pointer: coarse) {
+    .btn:hover,
+    .event-card:hover,
+    .admin-card:hover,
+    .admin-stat-card:hover,
+    .profile-card:hover,
+    .notification-card:hover,
+    .search-user-card:hover,
+    .participant-item:hover {
+        transform: none;
+    }
+
+    .app-header-search-item:hover {
+        transform: none;
+    }
+
+    .btn,
+    .nav-link,
+    .dropdown-item,
+    .page-link,
+    .participant-item,
+    .app-header-search-item {
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+/* =========================================================
+   Мобильная шапка: поиск всегда виден, вход справа
+   ========================================================= */
+
+.app-navbar-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.app-brand-icon-only {
+    order: 0;
+}
+
+.app-navbar-collapse {
+    order: 1;
+    flex: 0 0 auto;
+    width: auto;
+    flex-grow: 0;
+}
+
+.app-header-search-wrapper {
+    order: 2;
+}
+
+.app-navbar-actions {
+    order: 3;
+}
+
+.app-navbar-toggler {
+    order: 4;
+}
+
+@media (min-width: 992px) {
+    .app-navbar-collapse {
+        display: flex !important;
+    }
+
+    .app-navbar-toggler {
+        display: none;
+    }
+}
+
+@media (max-width: 991px) {
+    .app-navbar-container {
+        gap: 10px;
+    }
+
+    .app-brand-icon-only {
+        order: 0;
+    }
+
+    .app-navbar-toggler {
+        order: 1;
+    }
+
+    .app-header-search-wrapper {
+        order: 2;
+        flex: 1 1 100%;
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        margin: 8px 0 0 0;
+    }
+
+    .app-navbar-actions {
+        order: 3;
+        width: 100%;
+        margin: 0;
+        justify-content: space-between;
+    }
+
+    .app-navbar-collapse {
+        order: 4;
+        flex: 1 1 100%;
+        width: 100%;
+    }
+}
+
+@media (max-width: 767px) {
+    .app-navbar-container {
+        flex-wrap: nowrap;
+        gap: 8px;
+    }
+
+    .app-brand-icon-only {
+        display: none;
+    }
+
+    .app-navbar-toggler {
+        order: 0;
+        flex: 0 0 42px;
+        width: 42px;
+        height: 42px;
+        margin: 0;
+    }
+
+    .app-header-search-wrapper {
+        order: 1;
+        flex: 1 1 auto;
+        width: auto;
+        max-width: none;
+        min-width: 0;
+        margin: 0;
+    }
+
+    .app-navbar-actions {
+        order: 2;
+        flex: 0 0 auto;
+        width: auto;
+        margin: 0;
+        gap: 0;
+    }
+
+    .app-navbar-collapse {
+        position: absolute;
+        top: 100%;
+        left: 12px;
+        right: 12px;
+        z-index: 1250;
+        order: 3;
+        width: auto;
+        margin-top: 8px;
+        padding: 10px;
+        border: 1px solid var(--lm-border);
+        border-radius: 16px;
+        background: var(--lm-surface-raised);
+        box-shadow: var(--lm-shadow-hover);
+    }
+
+        .app-navbar-collapse:not(.show) {
+            display: none !important;
+        }
+
+        .app-navbar-collapse.show {
+            display: block !important;
+        }
+
+        .app-navbar-collapse .app-nav {
+            width: 100%;
+            padding: 0;
+        }
+
+        .app-navbar-collapse .app-nav-link {
+            width: 100%;
+            min-height: 40px;
+            padding: 10px 12px !important;
+        }
+
+    .theme-toggle {
+        display: none;
+    }
+
+    .app-auth-links {
+        gap: 0 !important;
+    }
+
+    .app-register-link {
+        display: none !important;
+    }
+
+    .app-login-link {
+        min-height: 42px;
+        padding: 9px 13px;
+        border-radius: 999px;
+        white-space: nowrap;
+    }
+
+    .user-menu-button {
+        min-height: 42px;
+        padding: 6px 9px;
+        border-radius: 999px;
+    }
+
+    .user-menu-name {
+        display: none;
+    }
+
+    .user-menu-avatar {
+        width: 30px;
+        height: 30px;
+    }
+
+    .app-header-search-input {
+        min-height: 42px;
+        padding: 9px 44px 9px 14px;
+        border-radius: 999px;
+        font-size: 0.94rem;
+    }
+
+    .app-header-search-button {
+        width: 32px;
+        height: 32px;
+        right: 5px;
+    }
+
+    .app-header-search-results {
+        position: fixed;
+        top: 62px;
+        left: 10px;
+        right: 10px;
+        max-height: calc(100vh - 78px);
+        overflow-y: auto;
+        border-radius: 16px;
+    }
+}
+
+@media (max-width: 420px) {
+    .app-navbar-container {
+        gap: 6px;
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .app-navbar-toggler {
+        flex-basis: 40px;
+        width: 40px;
+        height: 40px;
+    }
+
+    .app-login-link {
+        min-height: 40px;
+        padding: 8px 11px;
+        font-size: 0.88rem;
+    }
+
+    .user-menu-button {
+        min-height: 40px;
+        padding: 5px 8px;
+    }
+
+    .app-header-search-input {
+        min-height: 40px;
+        padding-left: 12px;
+        font-size: 0.9rem;
+    }
+
+    .app-header-search-button {
+        width: 30px;
+        height: 30px;
+    }
+}
+/* =========================================================
+   Закреплённая шапка сайта
+   ========================================================= */
+
+.app-header {
+    position: sticky !important;
+    top: 0;
+    z-index: 1400;
+    width: 100%;
+}
+
+.app-navbar {
+    min-height: 64px;
+}
+
+.app-header .dropdown-menu,
+.app-header-search-results,
+.app-navbar-collapse {
+    z-index: 1500;
+}
+
+@media (max-width: 767px) {
+    .app-header {
+        position: sticky !important;
+        top: 0;
+    }
+
+    .app-navbar {
+        min-height: 58px;
+    }
+
+    .app-navbar-container {
+        position: relative;
+    }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+    .app-header {
+        position: sticky !important;
+        top: 0;
+    }
+}
+/* =========================================================
+   Жёстко закреплённый Layout при прокрутке
+   ========================================================= */
+
+:root {
+    --app-header-offset: 72px;
+}
+
+html {
+    scroll-padding-top: calc(var(--app-header-offset) + 16px);
+}
+
+body {
+    padding-top: var(--app-header-offset) !important;
+}
+
+.app-header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 3000;
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+.app-navbar {
+    min-height: 64px;
+}
+
+.app-header .dropdown-menu,
+.app-header-search-results,
+.app-navbar-collapse {
+    z-index: 3100;
+}
+
+.app-main {
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 991px) {
+    .app-header {
+        position: fixed !important;
+        top: 0 !important;
+    }
+
+    .app-navbar-container {
+        position: relative;
+    }
+}
+
+@media (max-width: 767px) {
+    :root {
+        --app-header-offset: 58px;
+    }
+
+    body {
+        padding-top: var(--app-header-offset) !important;
+    }
+
+    .app-header {
+        position: fixed !important;
+        top: 0 !important;
+    }
+
+    .app-navbar {
+        min-height: 58px;
+    }
+
+    .app-navbar-collapse {
+        position: fixed;
+        top: calc(var(--app-header-offset) + 8px);
+        left: 12px;
+        right: 12px;
+    }
+
+    .app-header-search-results {
+        position: fixed;
+        top: calc(var(--app-header-offset) + 8px);
+        left: 10px;
+        right: 10px;
+        max-height: calc(100vh - var(--app-header-offset) - 24px);
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 420px) {
+    :root {
+        --app-header-offset: 56px;
+    }
+
+    .app-navbar {
+        min-height: 56px;
+    }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+    .app-header {
+        position: fixed !important;
+        top: 0 !important;
+    }
+
+    body {
+        padding-top: var(--app-header-offset) !important;
+    }
+}

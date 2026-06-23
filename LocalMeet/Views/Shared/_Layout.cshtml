@@ -36,6 +36,10 @@
           href="~/css/layout-search.css"
           asp-append-version="true" />
 
+    <link rel="stylesheet"
+          href="~/css/responsive.css"
+          asp-append-version="true" />
+
     @await RenderSectionAsync("Styles", required: false)
 </head>
 
@@ -113,57 +117,45 @@
                             </a>
                         </li>
                     </ul>
+                </div>
 
-                    <div class="app-header-search-wrapper">
-                        <form class="app-header-search"
-                              asp-area=""
-                              asp-controller="Search"
-                              asp-action="Index"
-                              method="get"
-                              autocomplete="off"
-                              data-header-search-form>
+                <div class="app-header-search-wrapper">
+                    <form class="app-header-search"
+                          asp-area=""
+                          asp-controller="Search"
+                          asp-action="Index"
+                          method="get"
+                          autocomplete="off"
+                          data-header-search-form>
 
-                            <label class="visually-hidden"
-                                   for="headerSearchInput">
-                                Поиск мероприятий и пользователей
-                            </label>
+                        <label class="visually-hidden"
+                               for="headerSearchInput">
+                            Поиск мероприятий и пользователей
+                        </label>
 
-                            <input id="headerSearchInput"
-                                   class="form-control app-header-search-input"
-                                   type="search"
-                                   name="query"
-                                   maxlength="80"
-                                   placeholder="Поиск мероприятий и пользователей"
-                                   data-header-search-input
-                                   data-search-url="@Url.Action("Autocomplete", "Search")" />
+                        <input id="headerSearchInput"
+                               class="form-control app-header-search-input"
+                               type="search"
+                               name="query"
+                               maxlength="80"
+                               placeholder="Поиск"
+                               data-header-search-input
+                               data-search-url="@Url.Action("Autocomplete", "Search")" />
 
-                            <button class="app-header-search-button"
-                                    type="submit"
-                                    aria-label="Найти">
-                                <span aria-hidden="true">⌕</span>
-                            </button>
-
-                            <div class="app-header-search-results"
-                                 data-header-search-results
-                                 aria-live="polite"></div>
-                        </form>
-                    </div>
-
-                    <div class="app-navbar-actions">
-                        <button type="button"
-                                class="theme-toggle"
-                                data-theme-toggle
-                                aria-label="Переключить тему"
-                                title="Переключить тему">
-
-                            <span class="theme-toggle-icon"
-                                  data-theme-icon>
-                                ☀
-                            </span>
+                        <button class="app-header-search-button"
+                                type="submit"
+                                aria-label="Найти">
+                            <span aria-hidden="true">⌕</span>
                         </button>
 
-                        <partial name="_LoginPartial" />
-                    </div>
+                        <div class="app-header-search-results"
+                             data-header-search-results
+                             aria-live="polite"></div>
+                    </form>
+                </div>
+
+                <div class="app-navbar-actions">
+                    <partial name="_LoginPartial" />
                 </div>
             </div>
         </nav>
