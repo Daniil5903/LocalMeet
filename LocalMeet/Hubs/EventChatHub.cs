@@ -94,14 +94,27 @@ namespace LocalMeet.Hubs
 
             _context.EventMessages.Add(message);
 
-            var notificationRecipients = eventEntity.Participations
+            var notificationRecipientIds = eventEntity.Participations
                 .Select(p => p.UserId)
                 .Append(eventEntity.CreatorId)
                 .Where(userId => userId != currentUser.Id)
                 .Distinct()
                 .ToList();
 
-            foreach (var recipientId in notificationRecipients)
+            if (notificationRecipientIds.Any())
+            {
+                var adminUsers = await _userManager.GetUsersInRoleAsync(AppRole.Admin);
+
+                var adminUserIds = adminUsers
+                    .Select(user => user.Id)
+                    .ToHashSet();
+
+                notificationRecipientIds = notificationRecipientIds
+                    .Where(userId => !adminUserIds.Contains(userId) || userId == eventEntity.CreatorId)
+                    .ToList();
+            }
+
+            foreach (var recipientId in notificationRecipientIds)
             {
                 _context.Notifications.Add(new Notification
                 {

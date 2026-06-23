@@ -67,6 +67,7 @@ namespace LocalMeet.Areas.Admin.Controllers
 
             var orderedQuery = query
                 .OrderBy(r => r.Status != ReportStatus.New)
+                .ThenBy(r => r.Status != ReportStatus.InReview)
                 .ThenByDescending(r => r.CreatedAt);
 
             var totalItems = await orderedQuery.CountAsync();
@@ -81,9 +82,7 @@ namespace LocalMeet.Areas.Admin.Controllers
             ViewData["TotalPages"] = totalPages;
             ViewData["TotalItems"] = totalItems;
 
-            var reports = await query
-                .OrderBy(r => r.Status != ReportStatus.New)
-                .ThenByDescending(r => r.CreatedAt)
+            var reports = await orderedQuery
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -144,6 +143,18 @@ namespace LocalMeet.Areas.Admin.Controllers
                 return NotFound();
             }
 
+            if (IsFinalStatus(report.Status))
+            {
+                TempData["ErrorMessage"] = "Жалоба уже обработана. Повторная обработка недоступна.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            if (report.Status == ReportStatus.InReview)
+            {
+                TempData["SuccessMessage"] = "Жалоба уже находится в работе";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
             report.Status = ReportStatus.InReview;
 
             await _context.SaveChangesAsync();
@@ -171,6 +182,12 @@ namespace LocalMeet.Areas.Admin.Controllers
                 return NotFound();
             }
 
+            if (IsFinalStatus(report.Status))
+            {
+                TempData["ErrorMessage"] = "Жалоба уже обработана. Повторное закрытие недоступно.";
+                return RedirectToAction(nameof(Details), new { id = report.Id });
+            }
+
             report.Status = ReportStatus.Closed;
             report.AdminComment = model.AdminComment.Trim();
             report.ReviewedAt = DateTime.Now;
@@ -179,14 +196,14 @@ namespace LocalMeet.Areas.Admin.Controllers
             {
                 UserId = report.AuthorId,
                 Title = "Жалоба рассмотрена",
-                Message = $"Ваша жалоба №{report.Id} была рассмотрена администрацией.",
+                Message = $"Ваша жалоба №{report.Id} была рассмотрена администрацией. Решение: жалоба закрыта.",
                 Link = null,
                 CreatedAt = DateTime.Now
             });
 
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Жалоба закрыта";
+            TempData["SuccessMessage"] = "Жалоба закрыта. Повторная обработка этой жалобы теперь недоступна.";
 
             return RedirectToAction(nameof(Details), new { id = report.Id });
         }
@@ -209,6 +226,12 @@ namespace LocalMeet.Areas.Admin.Controllers
                 return NotFound();
             }
 
+            if (IsFinalStatus(report.Status))
+            {
+                TempData["ErrorMessage"] = "Жалоба уже обработана. Повторное отклонение недоступно.";
+                return RedirectToAction(nameof(Details), new { id = report.Id });
+            }
+
             report.Status = ReportStatus.Rejected;
             report.AdminComment = model.AdminComment.Trim();
             report.ReviewedAt = DateTime.Now;
@@ -217,14 +240,14 @@ namespace LocalMeet.Areas.Admin.Controllers
             {
                 UserId = report.AuthorId,
                 Title = "Жалоба отклонена",
-                Message = $"Ваша жалоба №{report.Id} была отклонена администрацией.",
+                Message = $"Ваша жалоба №{report.Id} была рассмотрена администрацией. Решение: жалоба отклонена.",
                 Link = null,
                 CreatedAt = DateTime.Now
             });
 
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Жалоба отклонена";
+            TempData["SuccessMessage"] = "Жалоба отклонена. Повторная обработка этой жалобы теперь недоступна.";
 
             return RedirectToAction(nameof(Details), new { id = report.Id });
         }
@@ -241,11 +264,23 @@ namespace LocalMeet.Areas.Admin.Controllers
                 return NotFound();
             }
 
+            if (IsFinalStatus(report.Status))
+            {
+                TempData["ErrorMessage"] = "Жалоба уже обработана. Действия по объекту недоступны.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
             var targetUser = await _userManager.FindByIdAsync(report.TargetId);
 
             if (targetUser == null)
             {
                 return NotFound();
+            }
+
+            if (targetUser.IsBlocked)
+            {
+                TempData["SuccessMessage"] = "Пользователь уже заблокирован";
+                return RedirectToAction(nameof(Details), new { id });
             }
 
             targetUser.IsBlocked = true;
@@ -255,8 +290,8 @@ namespace LocalMeet.Areas.Admin.Controllers
             _context.Notifications.Add(new Notification
             {
                 UserId = targetUser.Id,
-                Title = "Учетная запись заблокирована",
-                Message = "Ваша учетная запись была заблокирована администрацией.",
+                Title = "Учётная запись заблокирована",
+                Message = "Ваша учётная запись была заблокирована администрацией.",
                 Link = null,
                 CreatedAt = DateTime.Now
             });
@@ -280,11 +315,23 @@ namespace LocalMeet.Areas.Admin.Controllers
                 return NotFound();
             }
 
+            if (IsFinalStatus(report.Status))
+            {
+                TempData["ErrorMessage"] = "Жалоба уже обработана. Действия по объекту недоступны.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
             var targetUser = await _userManager.FindByIdAsync(report.TargetId);
 
             if (targetUser == null)
             {
                 return NotFound();
+            }
+
+            if (!targetUser.IsBlocked)
+            {
+                TempData["SuccessMessage"] = "Пользователь уже разблокирован";
+                return RedirectToAction(nameof(Details), new { id });
             }
 
             targetUser.IsBlocked = false;
@@ -294,8 +341,8 @@ namespace LocalMeet.Areas.Admin.Controllers
             _context.Notifications.Add(new Notification
             {
                 UserId = targetUser.Id,
-                Title = "Учетная запись разблокирована",
-                Message = "Ваша учетная запись была разблокирована администрацией.",
+                Title = "Учётная запись разблокирована",
+                Message = "Ваша учётная запись была разблокирована администрацией.",
                 Link = null,
                 CreatedAt = DateTime.Now
             });
@@ -319,6 +366,12 @@ namespace LocalMeet.Areas.Admin.Controllers
                 return NotFound();
             }
 
+            if (IsFinalStatus(report.Status))
+            {
+                TempData["ErrorMessage"] = "Жалоба уже обработана. Действия по объекту недоступны.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
             if (!int.TryParse(report.TargetId, out var eventId))
             {
                 return NotFound();
@@ -330,6 +383,12 @@ namespace LocalMeet.Areas.Admin.Controllers
             if (eventEntity == null)
             {
                 return NotFound();
+            }
+
+            if (eventEntity.Status == EventStatus.Cancelled)
+            {
+                TempData["SuccessMessage"] = "Мероприятие уже отменено";
+                return RedirectToAction(nameof(Details), new { id });
             }
 
             eventEntity.Status = EventStatus.Cancelled;
@@ -362,6 +421,12 @@ namespace LocalMeet.Areas.Admin.Controllers
                 return NotFound();
             }
 
+            if (IsFinalStatus(report.Status))
+            {
+                TempData["ErrorMessage"] = "Жалоба уже обработана. Действия по объекту недоступны.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
             if (!int.TryParse(report.TargetId, out var messageId))
             {
                 return NotFound();
@@ -374,6 +439,12 @@ namespace LocalMeet.Areas.Admin.Controllers
             if (message == null)
             {
                 return NotFound();
+            }
+
+            if (message.IsDeleted)
+            {
+                TempData["SuccessMessage"] = "Сообщение уже скрыто";
+                return RedirectToAction(nameof(Details), new { id });
             }
 
             message.IsDeleted = true;
@@ -396,6 +467,8 @@ namespace LocalMeet.Areas.Admin.Controllers
 
         private async Task<AdminReportDetailsViewModel> BuildDetailsViewModelAsync(Report report)
         {
+            var canProcess = !IsFinalStatus(report.Status);
+
             var model = new AdminReportDetailsViewModel
             {
                 Id = report.Id,
@@ -415,14 +488,16 @@ namespace LocalMeet.Areas.Admin.Controllers
                 StatusCssClass = GetStatusCssClass(report.Status),
                 CreatedAt = report.CreatedAt,
                 ReviewedAt = report.ReviewedAt,
-                AdminComment = report.AdminComment
+                AdminComment = report.AdminComment,
+                CanProcess = canProcess,
+                CanTakeInWork = report.Status == ReportStatus.New
             };
 
             if (report.TargetType == ReportTargetType.User)
             {
                 var user = await _userManager.FindByIdAsync(report.TargetId);
 
-                model.CanBlockUser = user != null;
+                model.CanBlockUser = canProcess && user != null;
                 model.TargetUserIsBlocked = user?.IsBlocked ?? false;
             }
 
@@ -432,7 +507,10 @@ namespace LocalMeet.Areas.Admin.Controllers
                 var eventEntity = await _context.Events
                     .FirstOrDefaultAsync(e => e.Id == eventId);
 
-                model.CanCancelEvent = eventEntity != null && eventEntity.Status != EventStatus.Cancelled;
+                model.CanCancelEvent = canProcess &&
+                    eventEntity != null &&
+                    eventEntity.Status != EventStatus.Cancelled;
+
                 model.TargetEventStatus = eventEntity?.Status;
             }
 
@@ -442,7 +520,10 @@ namespace LocalMeet.Areas.Admin.Controllers
                 var message = await _context.EventMessages
                     .FirstOrDefaultAsync(m => m.Id == messageId);
 
-                model.CanHideMessage = message != null && !message.IsDeleted;
+                model.CanHideMessage = canProcess &&
+                    message != null &&
+                    !message.IsDeleted;
+
                 model.TargetMessageIsDeleted = message?.IsDeleted ?? false;
             }
 
@@ -545,12 +626,18 @@ namespace LocalMeet.Areas.Admin.Controllers
         {
             return status switch
             {
-                ReportStatus.New => "bg-primary",
-                ReportStatus.InReview => "bg-warning text-dark",
-                ReportStatus.Closed => "bg-success",
-                ReportStatus.Rejected => "bg-secondary",
-                _ => "bg-light text-dark"
+                ReportStatus.New => "text-bg-danger",
+                ReportStatus.InReview => "text-bg-warning",
+                ReportStatus.Closed => "text-bg-success",
+                ReportStatus.Rejected => "text-bg-secondary",
+                _ => "text-bg-light"
             };
+        }
+
+        private static bool IsFinalStatus(ReportStatus status)
+        {
+            return status == ReportStatus.Closed ||
+                   status == ReportStatus.Rejected;
         }
     }
 }

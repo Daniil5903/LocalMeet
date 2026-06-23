@@ -2,7 +2,6 @@
 
 @{
     ViewData["Title"] = "Уведомления";
-    var unreadCount = Model.Notifications.Count(n => !n.IsRead);
 }
 
 <div class="notifications-page">
@@ -10,11 +9,24 @@
         <div>
             <h1>Уведомления</h1>
             <p>Здесь отображаются важные события, связанные с вашими мероприятиями и участием.</p>
+
+            <div class="d-flex gap-2 flex-wrap mt-3">
+                <span class="badge text-bg-light">
+                    Всего: @Model.TotalItems
+                </span>
+
+                <span class="badge @(Model.TotalUnreadCount > 0 ? "text-bg-danger" : "text-bg-secondary")">
+                    Новых: @Model.TotalUnreadCountText
+                </span>
+            </div>
         </div>
 
-        @if (unreadCount > 0)
+        @if (Model.TotalUnreadCount > 0)
         {
-            <form asp-area="" asp-controller="Notifications" asp-action="MarkAllAsRead" method="post">
+            <form asp-area=""
+                  asp-controller="Notifications"
+                  asp-action="MarkAllAsRead"
+                  method="post">
                 @Html.AntiForgeryToken()
 
                 <button type="submit" class="btn btn-primary">
@@ -50,11 +62,11 @@
 
                             @if (notification.IsRead)
                             {
-                                <span class="badge bg-secondary">Прочитано</span>
+                                <span class="badge text-bg-secondary">Прочитано</span>
                             }
                             else
                             {
-                                <span class="badge bg-primary">Новое</span>
+                                <span class="badge text-bg-danger">Новое</span>
                             }
                         </div>
 

@@ -36,12 +36,14 @@ namespace LocalMeet.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            var query = _context.Notifications
-                .Where(n => n.UserId == currentUser.Id)
-                .OrderBy(n => n.IsRead)
-                .ThenByDescending(n => n.CreatedAt);
+            var userNotificationsQuery = _context.Notifications
+                .Where(n => n.UserId == currentUser.Id);
 
-            var totalItems = await query.CountAsync();
+            var totalItems = await userNotificationsQuery.CountAsync();
+
+            var totalUnreadCount = await userNotificationsQuery
+                .CountAsync(n => !n.IsRead);
+
             var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
             if (totalPages > 0 && page > totalPages)
@@ -49,7 +51,9 @@ namespace LocalMeet.Controllers
                 page = totalPages;
             }
 
-            var notifications = await query
+            var notifications = await userNotificationsQuery
+                .OrderBy(n => n.IsRead)
+                .ThenByDescending(n => n.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(n => new NotificationViewModel
@@ -68,7 +72,8 @@ namespace LocalMeet.Controllers
                 Notifications = notifications,
                 PageNumber = page,
                 TotalPages = totalPages,
-                TotalItems = totalItems
+                TotalItems = totalItems,
+                TotalUnreadCount = totalUnreadCount
             };
 
             return View(model);
@@ -93,9 +98,11 @@ namespace LocalMeet.Controllers
                 return NotFound();
             }
 
-            notification.IsRead = true;
-
-            await _context.SaveChangesAsync();
+            if (!notification.IsRead)
+            {
+                notification.IsRead = true;
+                await _context.SaveChangesAsync();
+            }
 
             if (!string.IsNullOrWhiteSpace(notification.Link) && Url.IsLocalUrl(notification.Link))
             {
@@ -119,6 +126,12 @@ namespace LocalMeet.Controllers
             var notifications = await _context.Notifications
                 .Where(n => n.UserId == currentUser.Id && !n.IsRead)
                 .ToListAsync();
+
+            if (!notifications.Any())
+            {
+                TempData["SuccessMessage"] = "Непрочитанных уведомлений нет";
+                return RedirectToAction(nameof(Index));
+            }
 
             foreach (var notification in notifications)
             {

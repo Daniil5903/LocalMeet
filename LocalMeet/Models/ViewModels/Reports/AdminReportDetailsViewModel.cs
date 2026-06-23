@@ -36,6 +36,10 @@ namespace LocalMeet.Models.ViewModels.Reports
 
         public string? AdminComment { get; set; }
 
+        public bool CanProcess { get; set; }
+
+        public bool CanTakeInWork { get; set; }
+
         public bool CanBlockUser { get; set; }
 
         public bool TargetUserIsBlocked { get; set; }

@@ -2,11 +2,6 @@
 
 @{
     ViewData["Title"] = $"Жалоба №{Model.Id}";
-
-    var processModel = new ProcessReportViewModel
-    {
-        ReportId = Model.Id
-    };
 }
 
 <div class="admin-page">
@@ -16,7 +11,10 @@
             <p>Подробная информация и действия администратора.</p>
         </div>
 
-        <a asp-area="Admin" asp-controller="Reports" asp-action="Index" class="btn btn-outline-secondary">
+        <a asp-area="Admin"
+           asp-controller="Reports"
+           asp-action="Index"
+           class="btn btn-outline-secondary">
             Назад к списку
         </a>
     </div>
@@ -44,7 +42,9 @@
                     <div>
                         <span>Статус</span>
                         <strong>
-                            <span class="badge @Model.StatusCssClass">@Model.StatusText</span>
+                            <span class="badge @Model.StatusCssClass">
+                                @Model.StatusText
+                            </span>
                         </strong>
                     </div>
 
@@ -99,57 +99,88 @@
             <div class="admin-card mt-4">
                 <h2 class="admin-section-title">Обработка жалобы</h2>
 
-                @if (Model.Status == ReportStatus.New)
+                @if (!Model.CanProcess)
                 {
-                    <form asp-area="Admin"
-                          asp-controller="Reports"
-                          asp-action="TakeInWork"
-                          asp-route-id="@Model.Id"
-                          method="post"
-                          class="mb-3">
-                        @Html.AntiForgeryToken()
-
-                        <button type="submit" class="btn btn-warning">
-                            Взять в работу
-                        </button>
-                    </form>
+                    <div class="alert alert-info mb-0">
+                        Жалоба уже обработана. Повторное закрытие, отклонение или взятие в работу недоступны.
+                    </div>
                 }
+                else
+                {
+                    @if (Model.CanTakeInWork)
+                    {
+                        <form asp-area="Admin"
+                              asp-controller="Reports"
+                              asp-action="TakeInWork"
+                              asp-route-id="@Model.Id"
+                              method="post"
+                              class="mb-4">
+                            @Html.AntiForgeryToken()
 
-                <form asp-area="Admin" asp-controller="Reports" asp-action="Close" method="post" class="mb-3">
-                    @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-warning">
+                                Взять в работу
+                            </button>
+                        </form>
+                    }
 
-                    <input type="hidden" name="ReportId" value="@Model.Id" />
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <form asp-area="Admin"
+                                  asp-controller="Reports"
+                                  asp-action="Close"
+                                  method="post">
+                                @Html.AntiForgeryToken()
 
-                    <div class="mb-3">
-                        <label class="form-label">Комментарий администратора</label>
-                        <textarea name="AdminComment"
-                                  class="form-control"
-                                  rows="4"
-                                  placeholder="Введите результат рассмотрения жалобы"></textarea>
+                                <input type="hidden" name="ReportId" value="@Model.Id" />
+
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        Комментарий администратора
+                                    </label>
+
+                                    <textarea name="AdminComment"
+                                          class="form-control"
+                                          rows="5"
+                                          maxlength="1000"
+                                          required
+                                          placeholder="Опишите результат рассмотрения жалобы"></textarea>
+                                </div>
+
+                                <button type="submit" class="btn btn-success w-100">
+                                    Закрыть жалобу
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="col-md-6">
+                            <form asp-area="Admin"
+                                  asp-controller="Reports"
+                                  asp-action="Reject"
+                                  method="post">
+                                @Html.AntiForgeryToken()
+
+                                <input type="hidden" name="ReportId" value="@Model.Id" />
+
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        Причина отклонения
+                                    </label>
+
+                                    <textarea name="AdminComment"
+                                          class="form-control"
+                                          rows="5"
+                                          maxlength="1000"
+                                          required
+                                          placeholder="Укажите, почему жалоба отклонена"></textarea>
+                                </div>
+
+                                <button type="submit" class="btn btn-outline-secondary w-100">
+                                    Отклонить жалобу
+                                </button>
+                            </form>
+                        </div>
                     </div>
-
-                    <button type="submit" class="btn btn-success">
-                        Закрыть жалобу
-                    </button>
-                </form>
-
-                <form asp-area="Admin" asp-controller="Reports" asp-action="Reject" method="post">
-                    @Html.AntiForgeryToken()
-
-                    <input type="hidden" name="ReportId" value="@Model.Id" />
-
-                    <div class="mb-3">
-                        <label class="form-label">Комментарий администратора</label>
-                        <textarea name="AdminComment"
-                                  class="form-control"
-                                  rows="4"
-                                  placeholder="Укажите причину отклонения жалобы"></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-outline-secondary">
-                        Отклонить жалобу
-                    </button>
-                </form>
+                }
             </div>
         </div>
 
@@ -181,7 +212,13 @@
             <div class="admin-card mt-4">
                 <h2 class="admin-section-title">Действия по объекту</h2>
 
-                @if (Model.TargetType == ReportTargetType.User && Model.CanBlockUser)
+                @if (!Model.CanProcess)
+                {
+                    <div class="text-muted">
+                        Жалоба уже закрыта или отклонена. Действия по объекту заблокированы.
+                    </div>
+                }
+                else if (Model.TargetType == ReportTargetType.User && Model.CanBlockUser)
                 {
                     if (Model.TargetUserIsBlocked)
                     {
