@@ -1,7 +1,18 @@
-﻿@model DeleteEventViewModel
+﻿@using LocalMeet.Models.Enums
+@model DeleteEventViewModel
 
 @{
     ViewData["Title"] = "Удаление мероприятия";
+
+    var statusCssClass = Model.Status switch
+    {
+        EventStatus.Pending => "text-bg-warning",
+        EventStatus.Approved => "text-bg-success",
+        EventStatus.Rejected => "text-bg-danger",
+        EventStatus.Cancelled => "text-bg-secondary",
+        EventStatus.Completed => "text-bg-info",
+        _ => "text-bg-light"
+    };
 }
 
 <div class="event-details-page">
@@ -31,7 +42,9 @@
             <div>
                 <span>Статус</span>
                 <strong>
-                    <span class="badge @Model.StatusCssClass">@Model.StatusText</span>
+                    <span class="badge @statusCssClass">
+                        @Model.StatusText
+                    </span>
                 </strong>
             </div>
         </div>
@@ -43,15 +56,23 @@
             </div>
         }
 
-        <form asp-area="" asp-controller="Events" asp-action="Delete" asp-route-id="@Model.Id" method="post">
+        <form asp-area=""
+              asp-controller="Events"
+              asp-action="Delete"
+              asp-route-id="@Model.Id"
+              method="post">
             @Html.AntiForgeryToken()
 
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 flex-wrap">
                 <button type="submit" class="btn btn-danger">
                     Удалить мероприятие
                 </button>
 
-                <a asp-area="" asp-controller="Events" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                <a asp-area=""
+                   asp-controller="Events"
+                   asp-action="Details"
+                   asp-route-id="@Model.Id"
+                   class="btn btn-outline-secondary">
                     Отмена
                 </a>
             </div>

@@ -26,6 +26,8 @@ namespace LocalMeet.Models.ViewModels.Events
 
         public string StatusCssClass { get; set; } = string.Empty;
 
+        public bool CanViewStatus { get; set; }
+
         public string CategoryName { get; set; } = string.Empty;
 
         public string CreatorName { get; set; } = string.Empty;

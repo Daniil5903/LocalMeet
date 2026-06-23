@@ -14,7 +14,10 @@
     const messagesContainer = document.getElementById("eventChatMessages");
     const chatForm = document.getElementById("eventChatForm");
     const chatInput = document.getElementById("eventChatInput");
+    const submitButton = document.getElementById("eventChatSubmitButton");
     const errorBox = document.getElementById("eventChatError");
+
+    let isSending = false;
 
     if (!eventId || !messagesContainer || !chatForm || !chatInput) {
         return;
@@ -47,28 +50,20 @@
 
     chatForm.addEventListener("submit", function (event) {
         event.preventDefault();
+        sendMessage();
+    });
 
-        const text = chatInput.value.trim();
-
-        if (!text) {
-            showError("Сообщение не может быть пустым");
+    chatInput.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter") {
             return;
         }
 
-        if (text.length > 1000) {
-            showError("Сообщение не должно превышать 1000 символов");
+        if (event.shiftKey) {
             return;
         }
 
-        hideError();
-
-        connection.invoke("SendMessage", eventId, text)
-            .then(function () {
-                chatInput.value = "";
-            })
-            .catch(function (error) {
-                showError(error.message || "Не удалось отправить сообщение");
-            });
+        event.preventDefault();
+        sendMessage();
     });
 
     messagesContainer.addEventListener("click", function (event) {
@@ -93,6 +88,39 @@
                 showError(error.message || "Не удалось удалить сообщение");
             });
     });
+
+    function sendMessage() {
+        if (isSending) {
+            return;
+        }
+
+        const text = chatInput.value.trim();
+
+        if (!text) {
+            showError("Сообщение не может быть пустым");
+            return;
+        }
+
+        if (text.length > 1000) {
+            showError("Сообщение не должно превышать 1000 символов");
+            return;
+        }
+
+        hideError();
+        setSendingState(true);
+
+        connection.invoke("SendMessage", eventId, text)
+            .then(function () {
+                chatInput.value = "";
+                chatInput.focus();
+            })
+            .catch(function (error) {
+                showError(error.message || "Не удалось отправить сообщение");
+            })
+            .finally(function () {
+                setSendingState(false);
+            });
+    }
 
     function appendMessage(message) {
         const messageElement = document.createElement("div");
@@ -168,8 +196,10 @@
 
         if (textElement) {
             textElement.innerHTML = "";
+
             const deletedText = document.createElement("em");
             deletedText.textContent = "Сообщение удалено администрацией";
+
             textElement.appendChild(deletedText);
         }
 
@@ -182,6 +212,17 @@
 
     function scrollChatToBottom() {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function setSendingState(value) {
+        isSending = value;
+
+        if (submitButton) {
+            submitButton.disabled = value;
+            submitButton.textContent = value
+                ? "Отправка..."
+                : "Отправить";
+        }
     }
 
     function showError(message) {

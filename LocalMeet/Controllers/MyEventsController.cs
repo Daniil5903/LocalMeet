@@ -68,23 +68,27 @@ namespace LocalMeet.Controllers
             var model = new MyEventsViewModel
             {
                 CreatedEvents = createdEvents
-                    .Select(MapToEventListItem)
+                    .Select(eventEntity => MapToEventListItem(eventEntity, currentUser))
                     .ToList(),
 
                 ParticipatingEvents = participatingEvents
-                    .Select(MapToEventListItem)
+                    .Select(eventEntity => MapToEventListItem(eventEntity, currentUser))
                     .ToList(),
 
                 PastEvents = pastEvents
-                    .Select(MapToEventListItem)
+                    .Select(eventEntity => MapToEventListItem(eventEntity, currentUser))
                     .ToList()
             };
 
             return View(model);
         }
 
-        private static EventListItemViewModel MapToEventListItem(Event eventEntity)
+        private static EventListItemViewModel MapToEventListItem(
+            Event eventEntity,
+            User currentUser)
         {
+            var isCreator = eventEntity.CreatorId == currentUser.Id;
+
             return new EventListItemViewModel
             {
                 Id = eventEntity.Id,
@@ -100,6 +104,7 @@ namespace LocalMeet.Controllers
                 Status = eventEntity.Status,
                 StatusText = GetStatusText(eventEntity.Status),
                 StatusCssClass = GetStatusCssClass(eventEntity.Status),
+                CanViewStatus = isCreator,
                 CategoryName = eventEntity.Category?.Name ?? "Без категории",
                 CreatorName = eventEntity.Creator != null
                     ? eventEntity.Creator.FirstName + " " + eventEntity.Creator.LastName
@@ -124,12 +129,12 @@ namespace LocalMeet.Controllers
         {
             return status switch
             {
-                EventStatus.Pending => "bg-warning text-dark",
-                EventStatus.Approved => "bg-success",
-                EventStatus.Rejected => "bg-danger",
-                EventStatus.Cancelled => "bg-secondary",
-                EventStatus.Completed => "bg-primary",
-                _ => "bg-light text-dark"
+                EventStatus.Pending => "text-bg-warning",
+                EventStatus.Approved => "text-bg-success",
+                EventStatus.Rejected => "text-bg-danger",
+                EventStatus.Cancelled => "text-bg-secondary",
+                EventStatus.Completed => "text-bg-info",
+                _ => "text-bg-light"
             };
         }
     }

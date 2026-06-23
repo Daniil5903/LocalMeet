@@ -19,8 +19,16 @@ else
             <div class="col-md-6 col-xl-4">
                 <article class="event-card">
                     <div class="event-card-header">
-                        <span class="badge text-bg-primary">@item.CategoryName</span>
-                        <span class="badge @item.StatusCssClass">@item.StatusText</span>
+                        <span class="badge text-bg-primary">
+                            @item.CategoryName
+                        </span>
+
+                        @if (item.CanViewStatus)
+                        {
+                            <span class="badge @item.StatusCssClass">
+                                @item.StatusText
+                            </span>
+                        }
                     </div>
 
                     <h2>@item.Title</h2>
@@ -62,9 +70,12 @@ else
                                           asp-route-eventId="@item.Id"
                                           method="post">
                                         @Html.AntiForgeryToken()
+
                                         <input type="hidden" name="returnUrl" value="@returnUrl" />
 
-                                        <button type="submit" class="btn btn-sm btn-outline-warning" title="Удалить из избранного">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-warning"
+                                                title="Удалить из избранного">
                                             ★
                                         </button>
                                     </form>
@@ -77,9 +88,12 @@ else
                                           asp-route-eventId="@item.Id"
                                           method="post">
                                         @Html.AntiForgeryToken()
+
                                         <input type="hidden" name="returnUrl" value="@returnUrl" />
 
-                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Добавить в избранное">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-secondary"
+                                                title="Добавить в избранное">
                                             ☆
                                         </button>
                                     </form>
