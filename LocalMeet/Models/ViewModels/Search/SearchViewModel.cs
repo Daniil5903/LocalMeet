@@ -27,6 +27,8 @@ namespace LocalMeet.Models.ViewModels.Search
 
         public bool IsPrivateProfile { get; set; }
 
+        public bool CanViewPrivateInfo { get; set; }
+
         public DateTime RegistrationDate { get; set; }
 
         public int CreatedEventsCount { get; set; }

@@ -37,79 +37,139 @@ namespace LocalMeet.Controllers
 
             var normalizedQuery = query.Trim();
 
-            var currentUser = await _userManager.GetUserAsync(User);
-            var favoriteEventIds = await GetFavoriteEventIdsAsync(currentUser);
+            var currentUser =
+                await _userManager.GetUserAsync(User);
 
-            var eventEntities = await _context.Events
-                .AsNoTracking()
-                .Include(e => e.Category)
-                .Include(e => e.Creator)
-                .Include(e => e.Participations)
-                .Where(e =>
-                    e.Status == EventStatus.Approved &&
-                    (e.Title.Contains(normalizedQuery) ||
-                     e.Description.Contains(normalizedQuery) ||
-                     e.Address.Contains(normalizedQuery) ||
-                     (e.Category != null &&
-                      e.Category.Name.Contains(normalizedQuery))))
-                .OrderBy(e => e.EventDate)
-                .Take(12)
-                .ToListAsync();
+            var currentUserId =
+                currentUser?.Id;
 
-            model.Events = eventEntities
-                .Select(e => new EventListItemViewModel
-                {
-                    Id = e.Id,
-                    Title = e.Title,
-                    DescriptionPreview = e.Description.Length > 160
-                        ? e.Description.Substring(0, 160) + "..."
-                        : e.Description,
-                    Address = e.Address,
-                    EventDate = e.EventDate,
-                    CreatedAt = e.CreatedAt,
-                    MaxParticipants = e.MaxParticipants,
-                    ParticipantsCount = e.Participations.Count,
-                    Status = e.Status,
-                    StatusText = GetStatusText(e.Status),
-                    StatusCssClass = GetStatusCssClass(e.Status),
-                    CanViewStatus = false,
-                    CategoryName = e.Category != null
-                        ? e.Category.Name
-                        : "Без категории",
-                    CreatorName = e.Creator != null
-                        ? e.Creator.FirstName + " " + e.Creator.LastName
-                        : "Неизвестный пользователь",
-                    IsFavorite = favoriteEventIds.Contains(e.Id),
-                    CanToggleFavorite = currentUser != null &&
-                                        !currentUser.IsBlocked
-                })
-                .ToList();
+            var isAdmin =
+                currentUser != null &&
+                await _userManager.IsInRoleAsync(
+                    currentUser,
+                    AppRole.Admin);
 
-            model.Users = await _context.Users
-                .AsNoTracking()
-                .Where(u =>
-                    !u.IsBlocked &&
-                    (u.FirstName.Contains(normalizedQuery) ||
-                     u.LastName.Contains(normalizedQuery) ||
-                     (u.Email != null &&
-                      u.Email.Contains(normalizedQuery)) ||
-                     (u.About != null &&
-                      u.About.Contains(normalizedQuery))))
-                .OrderBy(u => u.LastName)
-                .ThenBy(u => u.FirstName)
-                .Take(12)
-                .Select(u => new SearchUserListItemViewModel
-                {
-                    Id = u.Id,
-                    FullName = u.FirstName + " " + u.LastName,
-                    AvatarPath = u.AvatarPath,
-                    AboutPreview = u.About,
-                    IsPrivateProfile = u.IsPrivateProfile,
-                    RegistrationDate = u.RegistrationDate,
-                    CreatedEventsCount = u.CreatedEvents.Count,
-                    ParticipationsCount = u.Participations.Count
-                })
-                .ToListAsync();
+            var favoriteEventIds =
+                await GetFavoriteEventIdsAsync(
+                    currentUser);
+
+            var eventEntities =
+                await _context.Events
+                    .AsNoTracking()
+                    .Include(e => e.Category)
+                    .Include(e => e.Creator)
+                    .Include(e => e.Participations)
+                    .Where(e =>
+                        e.Status == EventStatus.Approved &&
+                        (
+                            e.Title.Contains(normalizedQuery) ||
+                            e.Description.Contains(normalizedQuery) ||
+                            e.Address.Contains(normalizedQuery) ||
+                            (
+                                e.Category != null &&
+                                e.Category.Name.Contains(normalizedQuery)
+                            )
+                        ))
+                    .OrderBy(e => e.EventDate)
+                    .Take(12)
+                    .ToListAsync();
+
+            model.Events =
+                eventEntities
+                    .Select(e => new EventListItemViewModel
+                    {
+                        Id = e.Id,
+                        Title = e.Title,
+                        DescriptionPreview = e.Description.Length > 160
+                            ? e.Description.Substring(0, 160) + "..."
+                            : e.Description,
+                        Address = e.Address,
+                        EventDate = e.EventDate,
+                        CreatedAt = e.CreatedAt,
+                        MaxParticipants = e.MaxParticipants,
+                        ParticipantsCount = e.Participations.Count,
+                        Status = e.Status,
+                        StatusText = GetStatusText(e.Status),
+                        StatusCssClass = GetStatusCssClass(e.Status),
+                        CanViewStatus = false,
+                        CategoryName = e.Category != null
+                            ? e.Category.Name
+                            : "Без категории",
+                        CreatorName = e.Creator != null
+                            ? e.Creator.FirstName + " " + e.Creator.LastName
+                            : "Неизвестный пользователь",
+                        IsFavorite = favoriteEventIds.Contains(e.Id),
+                        CanToggleFavorite =
+                            currentUser != null &&
+                            !currentUser.IsBlocked
+                    })
+                    .ToList();
+
+            var usersQuery =
+                _context.Users
+                    .AsNoTracking()
+                    .Where(u => !u.IsBlocked);
+
+            if (isAdmin)
+            {
+                usersQuery =
+                    usersQuery.Where(u =>
+                        u.FirstName.Contains(normalizedQuery) ||
+                        u.LastName.Contains(normalizedQuery) ||
+                        (
+                            u.Email != null &&
+                            u.Email.Contains(normalizedQuery)
+                        ) ||
+                        (
+                            u.About != null &&
+                            u.About.Contains(normalizedQuery)
+                        ));
+            }
+            else
+            {
+                usersQuery =
+                    usersQuery.Where(u =>
+                        u.FirstName.Contains(normalizedQuery) ||
+                        u.LastName.Contains(normalizedQuery) ||
+                        (
+                            !u.IsPrivateProfile &&
+                            u.About != null &&
+                            u.About.Contains(normalizedQuery)
+                        ));
+            }
+
+            model.Users =
+                await usersQuery
+                    .OrderBy(u => u.LastName)
+                    .ThenBy(u => u.FirstName)
+                    .Take(12)
+                    .Select(u => new SearchUserListItemViewModel
+                    {
+                        Id = u.Id,
+                        FullName = u.FirstName + " " + u.LastName,
+                        AvatarPath = u.AvatarPath,
+                        AboutPreview =
+                            isAdmin ||
+                            (
+                                currentUserId != null &&
+                                u.Id == currentUserId
+                            ) ||
+                            !u.IsPrivateProfile
+                                ? u.About
+                                : null,
+                        IsPrivateProfile = u.IsPrivateProfile,
+                        CanViewPrivateInfo =
+                            isAdmin ||
+                            (
+                                currentUserId != null &&
+                                u.Id == currentUserId
+                            ) ||
+                            !u.IsPrivateProfile,
+                        RegistrationDate = u.RegistrationDate,
+                        CreatedEventsCount = u.CreatedEvents.Count,
+                        ParticipationsCount = u.Participations.Count
+                    })
+                    .ToListAsync();
 
             foreach (var user in model.Users
                          .Where(u =>
@@ -146,31 +206,48 @@ namespace LocalMeet.Controllers
                 });
             }
 
+            var currentUser =
+                await _userManager.GetUserAsync(User);
+
+            var currentUserId =
+                currentUser?.Id;
+
+            var isAdmin =
+                currentUser != null &&
+                await _userManager.IsInRoleAsync(
+                    currentUser,
+                    AppRole.Admin);
+
             var items = new List<object>();
 
-            var events = await _context.Events
-                .AsNoTracking()
-                .Include(e => e.Category)
-                .Where(e =>
-                    e.Status == EventStatus.Approved &&
-                    (e.Title.Contains(normalizedQuery) ||
-                     e.Description.Contains(normalizedQuery) ||
-                     e.Address.Contains(normalizedQuery) ||
-                     (e.Category != null &&
-                      e.Category.Name.Contains(normalizedQuery))))
-                .OrderBy(e => e.EventDate)
-                .Take(5)
-                .Select(e => new
-                {
-                    e.Id,
-                    e.Title,
-                    e.EventDate,
-                    e.Address,
-                    CategoryName = e.Category != null
-                        ? e.Category.Name
-                        : "Без категории"
-                })
-                .ToListAsync();
+            var events =
+                await _context.Events
+                    .AsNoTracking()
+                    .Include(e => e.Category)
+                    .Where(e =>
+                        e.Status == EventStatus.Approved &&
+                        (
+                            e.Title.Contains(normalizedQuery) ||
+                            e.Description.Contains(normalizedQuery) ||
+                            e.Address.Contains(normalizedQuery) ||
+                            (
+                                e.Category != null &&
+                                e.Category.Name.Contains(normalizedQuery)
+                            )
+                        ))
+                    .OrderBy(e => e.EventDate)
+                    .Take(5)
+                    .Select(e => new
+                    {
+                        e.Id,
+                        e.Title,
+                        e.EventDate,
+                        e.Address,
+                        CategoryName = e.Category != null
+                            ? e.Category.Name
+                            : "Без категории"
+                    })
+                    .ToListAsync();
 
             foreach (var eventItem in events)
             {
@@ -179,53 +256,90 @@ namespace LocalMeet.Controllers
                     type = "event",
                     typeText = "Мероприятие",
                     title = eventItem.Title,
-                    subtitle = $"{eventItem.CategoryName} • {eventItem.EventDate:dd.MM.yyyy HH:mm}",
+                    subtitle =
+                        $"{eventItem.CategoryName} • {eventItem.EventDate:dd.MM.yyyy HH:mm}",
                     meta = eventItem.Address,
-                    url = Url.Action(
-                        "Details",
-                        "Events",
-                        new
-                        {
-                            id = eventItem.Id
-                        }) ?? $"/Events/Details/{eventItem.Id}",
+                    url =
+                        Url.Action(
+                            "Details",
+                            "Events",
+                            new
+                            {
+                                id = eventItem.Id
+                            }) ??
+                        $"/Events/Details/{eventItem.Id}",
                     avatarPath = "",
                     badge = eventItem.CategoryName
                 });
             }
 
-            var users = await _context.Users
-                .AsNoTracking()
-                .Where(u =>
-                    !u.IsBlocked &&
-                    (u.FirstName.Contains(normalizedQuery) ||
-                     u.LastName.Contains(normalizedQuery) ||
-                     (u.Email != null &&
-                      u.Email.Contains(normalizedQuery)) ||
-                     (u.About != null &&
-                      u.About.Contains(normalizedQuery))))
-                .OrderBy(u => u.LastName)
-                .ThenBy(u => u.FirstName)
-                .Take(5)
-                .Select(u => new
-                {
-                    u.Id,
-                    u.FirstName,
-                    u.LastName,
-                    u.AvatarPath,
-                    u.About,
-                    u.IsPrivateProfile
-                })
-                .ToListAsync();
+            var usersQuery =
+                _context.Users
+                    .AsNoTracking()
+                    .Where(u => !u.IsBlocked);
+
+            if (isAdmin)
+            {
+                usersQuery =
+                    usersQuery.Where(u =>
+                        u.FirstName.Contains(normalizedQuery) ||
+                        u.LastName.Contains(normalizedQuery) ||
+                        (
+                            u.Email != null &&
+                            u.Email.Contains(normalizedQuery)
+                        ) ||
+                        (
+                            u.About != null &&
+                            u.About.Contains(normalizedQuery)
+                        ));
+            }
+            else
+            {
+                usersQuery =
+                    usersQuery.Where(u =>
+                        u.FirstName.Contains(normalizedQuery) ||
+                        u.LastName.Contains(normalizedQuery) ||
+                        (
+                            !u.IsPrivateProfile &&
+                            u.About != null &&
+                            u.About.Contains(normalizedQuery)
+                        ));
+            }
+
+            var users =
+                await usersQuery
+                    .OrderBy(u => u.LastName)
+                    .ThenBy(u => u.FirstName)
+                    .Take(5)
+                    .Select(u => new
+                    {
+                        u.Id,
+                        u.FirstName,
+                        u.LastName,
+                        u.AvatarPath,
+                        u.About,
+                        u.IsPrivateProfile
+                    })
+                    .ToListAsync();
 
             foreach (var user in users)
             {
-                var subtitle = user.IsPrivateProfile
-                    ? "Профиль пользователя"
-                    : TrimPreview(
-                        string.IsNullOrWhiteSpace(user.About)
-                            ? "Пользователь LocalMeet"
-                            : user.About,
-                        80);
+                var canViewPrivateInfo =
+                    isAdmin ||
+                    (
+                        currentUserId != null &&
+                        user.Id == currentUserId
+                    ) ||
+                    !user.IsPrivateProfile;
+
+                var subtitle =
+                    canViewPrivateInfo
+                        ? TrimPreview(
+                            string.IsNullOrWhiteSpace(user.About)
+                                ? "Пользователь LocalMeet"
+                                : user.About,
+                            80)
+                        : "Профиль пользователя";
 
                 items.Add(new
                 {
@@ -234,13 +348,15 @@ namespace LocalMeet.Controllers
                     title = $"{user.FirstName} {user.LastName}",
                     subtitle,
                     meta = "",
-                    url = Url.Action(
-                        "ViewUser",
-                        "Profile",
-                        new
-                        {
-                            id = user.Id
-                        }) ?? $"/Profile/User/{user.Id}",
+                    url =
+                        Url.Action(
+                            "ViewUser",
+                            "Profile",
+                            new
+                            {
+                                id = user.Id
+                            }) ??
+                        $"/Profile/User/{user.Id}",
                     avatarPath = string.IsNullOrWhiteSpace(user.AvatarPath)
                         ? "/images/default-avatar.png"
                         : user.AvatarPath,
@@ -263,10 +379,11 @@ namespace LocalMeet.Controllers
                 return new HashSet<int>();
             }
 
-            var favoriteIds = await _context.FavoriteEvents
-                .Where(f => f.UserId == currentUser.Id)
-                .Select(f => f.EventId)
-                .ToListAsync();
+            var favoriteIds =
+                await _context.FavoriteEvents
+                    .Where(f => f.UserId == currentUser.Id)
+                    .Select(f => f.EventId)
+                    .ToListAsync();
 
             return favoriteIds.ToHashSet();
         }
@@ -287,7 +404,8 @@ namespace LocalMeet.Controllers
                 : normalizedText;
         }
 
-        private static string GetStatusText(EventStatus status)
+        private static string GetStatusText(
+            EventStatus status)
         {
             return status switch
             {
@@ -300,7 +418,8 @@ namespace LocalMeet.Controllers
             };
         }
 
-        private static string GetStatusCssClass(EventStatus status)
+        private static string GetStatusCssClass(
+            EventStatus status)
         {
             return status switch
             {

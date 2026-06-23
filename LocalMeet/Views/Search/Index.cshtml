@@ -4,72 +4,170 @@
     ViewData["Title"] = "Поиск";
 
     var query = Model?.Query;
-    var users = Model?.Users ?? new List<LocalMeet.Models.ViewModels.Search.SearchUserListItemViewModel>();
-    var events = Model?.Events ?? new List<LocalMeet.Models.ViewModels.Events.EventListItemViewModel>();
+    var users =
+        Model?.Users ??
+        new List<LocalMeet.Models.ViewModels.Search.SearchUserListItemViewModel>();
+
+    var events =
+        Model?.Events ??
+        new List<LocalMeet.Models.ViewModels.Events.EventListItemViewModel>();
 
     var hasQuery = !string.IsNullOrWhiteSpace(query);
     var hasResults = users.Any() || events.Any();
 }
 
-<div class="search-page">
-    <div class="events-hero">
+<div class="search-page search-page-polished">
+    <div class="events-hero search-hero">
         <div>
-            <h1>Поиск по LocalMeet</h1>
-            <p>Найдите мероприятия, категории, места проведения или пользователей сервиса.</p>
+            <span class="search-kicker">
+                Поиск по LocalMeet
+            </span>
+
+            <h1>Найдите мероприятие или пользователя</h1>
+
+            <p>
+                Используйте поиск по названию, категории, месту проведения,
+                описанию мероприятия или имени пользователя.
+            </p>
         </div>
+
+        @if (hasQuery)
+        {
+            <div class="search-hero-stats">
+                <div>
+                    <span>Мероприятия</span>
+                    <strong>@events.Count</strong>
+                </div>
+
+                <div>
+                    <span>Пользователи</span>
+                    <strong>@users.Count</strong>
+                </div>
+            </div>
+        }
     </div>
 
-    <div class="events-filter-card">
-        <form asp-area="" asp-controller="Search" asp-action="Index" method="get" class="row g-3">
-            <div class="col-lg-10">
-                <label class="form-label">Поисковый запрос</label>
+    <div class="events-filter-card search-main-form-card">
+        <form asp-area=""
+              asp-controller="Search"
+              asp-action="Index"
+              method="get"
+              class="search-main-form">
+
+            <div>
+                <label class="form-label">
+                    Поисковый запрос
+                </label>
+
                 <input type="text"
                        name="query"
                        value="@query"
-                       class="form-control"
-                       placeholder="Например: футбол, лекция, парк, имя пользователя" />
+                       class="form-control search-main-input"
+                       maxlength="80"
+                       placeholder="Например: футбол, лекция, парк, Иван" />
             </div>
 
-            <div class="col-lg-2 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary w-100">
-                    Найти
-                </button>
-            </div>
+            <button type="submit"
+                    class="btn btn-primary">
+                Найти
+            </button>
         </form>
     </div>
 
     @if (!hasQuery)
     {
-        <div class="empty-events-box">
+        <div class="search-empty-state">
+            <div class="search-empty-icon">
+                ⌕
+            </div>
+
             <h2>Введите запрос</h2>
-            <p>Поиск покажет подходящие мероприятия и пользователей.</p>
+
+            <p>
+                Поиск покажет подходящие мероприятия и пользователей.
+                Начните с одного или двух ключевых слов.
+            </p>
+
+            <div class="search-tips">
+                <span>спорт</span>
+                <span>лекция</span>
+                <span>парк</span>
+                <span>игры</span>
+                <span>волонтёрство</span>
+            </div>
         </div>
     }
     else if (!hasResults)
     {
-        <div class="empty-events-box">
+        <div class="search-empty-state">
+            <div class="search-empty-icon">
+                Ø
+            </div>
+
             <h2>Ничего не найдено</h2>
-            <p>Попробуйте изменить запрос или использовать другое слово.</p>
+
+            <p>
+                Попробуйте изменить запрос, сократить его или использовать
+                другое ключевое слово.
+            </p>
+
+            <a asp-area=""
+               asp-controller="Events"
+               asp-action="Index"
+               class="btn btn-outline-primary">
+                Смотреть все мероприятия
+            </a>
         </div>
     }
     else
     {
-        <div class="admin-card mb-4">
+        <div class="search-summary-row">
+            <div class="search-summary-card">
+                <span>Запрос</span>
+                <strong>@query</strong>
+            </div>
+
+            <div class="search-summary-card">
+                <span>Мероприятий</span>
+                <strong>@events.Count</strong>
+            </div>
+
+            <div class="search-summary-card">
+                <span>Пользователей</span>
+                <strong>@users.Count</strong>
+            </div>
+        </div>
+
+        <div class="admin-card mb-4 search-section-card">
             <div class="admin-card-title-row">
-                <h2 class="admin-section-title">Пользователи</h2>
-                <span class="text-muted">Найдено: @users.Count</span>
+                <div>
+                    <h2 class="admin-section-title">
+                        Пользователи
+                    </h2>
+
+                    <p class="search-section-subtitle">
+                        Пользователи, подходящие под поисковый запрос.
+                    </p>
+                </div>
+
+                <span class="text-muted">
+                    Найдено: @users.Count
+                </span>
             </div>
 
             @if (!users.Any())
             {
-                <div class="text-muted">Пользователи по запросу не найдены.</div>
+                <div class="text-muted">
+                    Пользователи по запросу не найдены.
+                </div>
             }
             else
             {
                 <div class="search-users-grid">
                     @foreach (var user in users)
                     {
-                        var avatarPath = string.IsNullOrWhiteSpace(user.AvatarPath)
+                        var avatarPath =
+                        string.IsNullOrWhiteSpace(user.AvatarPath)
                         ? "/images/default-avatar.png"
                         : user.AvatarPath;
 
@@ -77,28 +175,57 @@
                            asp-controller="Profile"
                            asp-action="ViewUser"
                            asp-route-id="@user.Id"
-                           class="search-user-card">
-                            <img src="@avatarPath" alt="Аватар пользователя" />
+                           class="search-user-card search-user-card-polished">
 
-                            <div>
-                                <h3>@user.FullName</h3>
-                                <div class="text-muted small">
-                                    На сервисе с @user.RegistrationDate.ToString("dd.MM.yyyy")
+                            <img src="@avatarPath"
+                                 alt="Аватар пользователя" />
+
+                            <div class="search-user-card-content">
+                                <div class="search-user-card-header">
+                                    <h3>@user.FullName</h3>
+
+                                    @if (user.IsPrivateProfile &&
+                                                            user.CanViewPrivateInfo)
+                                    {
+                                        <span class="badge text-bg-secondary">
+                                            Закрытый профиль
+                                        </span>
+                                    }
                                 </div>
 
-                                @if (user.IsPrivateProfile)
+                                @if (user.CanViewPrivateInfo)
                                 {
-                                    <span class="badge bg-secondary mt-2">Закрытый профиль</span>
-                                }
-                                else if (!string.IsNullOrWhiteSpace(user.AboutPreview))
-                                {
-                                    <p>@user.AboutPreview</p>
-                                }
+                                    <div class="text-muted small">
+                                        На сервисе с @user.RegistrationDate.ToString("dd.MM.yyyy")
+                                    </div>
 
-                                <div class="search-user-stats">
-                                    <span>Создано: @user.CreatedEventsCount</span>
-                                    <span>Участий: @user.ParticipationsCount</span>
-                                </div>
+                                    @if (!string.IsNullOrWhiteSpace(user.AboutPreview))
+                                    {
+                                        <p>@user.AboutPreview</p>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted">
+                                            Пользователь пока не заполнил описание профиля.
+                                        </p>
+                                    }
+
+                                    <div class="search-user-stats">
+                                        <span>
+                                            Создано: @user.CreatedEventsCount
+                                        </span>
+
+                                        <span>
+                                            Участий: @user.ParticipationsCount
+                                        </span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="text-muted mb-0">
+                                        Пользователь ограничил отображение подробной информации.
+                                    </p>
+                                }
                             </div>
                         </a>
                     }
@@ -106,13 +233,26 @@
             }
         </div>
 
-        <div>
+        <div class="search-section-card">
             <div class="admin-card-title-row">
-                <h2 class="admin-section-title">Мероприятия</h2>
-                <span class="text-muted">Найдено: @events.Count</span>
+                <div>
+                    <h2 class="admin-section-title">
+                        Мероприятия
+                    </h2>
+
+                    <p class="search-section-subtitle">
+                        Одобренные мероприятия, найденные по названию,
+                        описанию, категории или адресу.
+                    </p>
+                </div>
+
+                <span class="text-muted">
+                    Найдено: @events.Count
+                </span>
             </div>
 
-            <partial name="~/Views/Shared/_EventListCards.cshtml" model="events" />
+            <partial name="~/Views/Shared/_EventListCards.cshtml"
+                     model="events" />
         </div>
     }
 </div>
