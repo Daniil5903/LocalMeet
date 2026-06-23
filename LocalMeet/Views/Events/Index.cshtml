@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Мероприятия";
+
     var eventDateValue = Model.EventDate?.ToString("yyyy-MM-dd");
 }
 
@@ -12,7 +13,10 @@
             <p>Находите интересные события рядом с собой и присоединяйтесь к ним.</p>
         </div>
 
-        <a asp-area="" asp-controller="Events" asp-action="Create" class="btn btn-primary">
+        <a asp-area=""
+           asp-controller="Events"
+           asp-action="Create"
+           class="btn btn-primary">
             Создать мероприятие
         </a>
     </div>
@@ -32,25 +36,35 @@
     }
 
     <div class="events-filter-card">
-        <form asp-area="" asp-controller="Events" asp-action="Index" method="get" class="row g-3">
-            <div class="col-lg-4">
+        <form asp-area=""
+              asp-controller="Events"
+              asp-action="Index"
+              method="get"
+              class="row g-3">
+
+            <div class="col-lg-3">
                 <label class="form-label">Поиск</label>
+
                 <input type="text"
                        name="searchQuery"
                        value="@Model.SearchQuery"
                        class="form-control"
-                       placeholder="Название или описание" />
+                       placeholder="Название, описание или место" />
             </div>
 
-            <div class="col-lg-3">
+            <div class="col-lg-2">
                 <label class="form-label">Категория</label>
-                <select name="categoryId" class="form-select" asp-items="Model.Categories">
+
+                <select name="categoryId"
+                        class="form-select"
+                        asp-items="Model.Categories">
                     <option value="">Все категории</option>
                 </select>
             </div>
 
-            <div class="col-lg-3">
+            <div class="col-lg-2">
                 <label class="form-label">Дата</label>
+
                 <input type="date"
                        name="eventDate"
                        value="@eventDateValue"
@@ -58,43 +72,112 @@
             </div>
 
             <div class="col-lg-2">
+                <label class="form-label">Период</label>
+
+                <select name="eventPeriod"
+                        class="form-select">
+                    <option value="upcoming"
+                            selected="@(Model.EventPeriod == "upcoming")">
+                        Будущие
+                    </option>
+
+                    <option value="past"
+                            selected="@(Model.EventPeriod == "past")">
+                        Прошедшие
+                    </option>
+
+                    <option value="all"
+                            selected="@(Model.EventPeriod == "all")">
+                        Все
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-lg-3">
                 <label class="form-label">Сортировка</label>
-                <select name="sortOrder" class="form-select">
-                    <option value="" selected="@(string.IsNullOrWhiteSpace(Model.SortOrder))">
-                        Сначала ближайшие
+
+                <select name="sortOrder"
+                        class="form-select">
+                    <option value=""
+                            selected="@(string.IsNullOrWhiteSpace(Model.SortOrder))">
+                        По дате
                     </option>
-                    <option value="date_desc" selected="@(Model.SortOrder == "date_desc")">
-                        Сначала поздние
+
+                    <option value="date_desc"
+                            selected="@(Model.SortOrder == "date_desc")">
+                        По дате в обратном порядке
                     </option>
-                    <option value="created_desc" selected="@(Model.SortOrder == "created_desc")">
-                        Новые
+
+                    <option value="created_desc"
+                            selected="@(Model.SortOrder == "created_desc")">
+                        Сначала новые
                     </option>
-                    <option value="title" selected="@(Model.SortOrder == "title")">
+
+                    <option value="created"
+                            selected="@(Model.SortOrder == "created")">
+                        Сначала старые
+                    </option>
+
+                    <option value="title"
+                            selected="@(Model.SortOrder == "title")">
                         По названию А-Я
                     </option>
-                    <option value="title_desc" selected="@(Model.SortOrder == "title_desc")">
+
+                    <option value="title_desc"
+                            selected="@(Model.SortOrder == "title_desc")">
                         По названию Я-А
                     </option>
                 </select>
             </div>
 
-            <div class="col-12 d-flex gap-2">
-                <button type="submit" class="btn btn-primary">
+            <div class="col-12 d-flex gap-2 flex-wrap">
+                <button type="submit"
+                        class="btn btn-primary">
                     Применить
                 </button>
 
-                <a asp-area="" asp-controller="Events" asp-action="Index" class="btn btn-outline-secondary">
+                <a asp-area=""
+                   asp-controller="Events"
+                   asp-action="Index"
+                   class="btn btn-outline-secondary">
                     Сбросить
                 </a>
             </div>
         </form>
     </div>
 
-    <partial name="_EventListCards" model="Model.Events" />
+    <div class="events-result-summary">
+        @if (Model.EventPeriod == "past")
+        {
+            <span class="badge text-bg-secondary">
+                Прошедшие мероприятия
+            </span>
+        }
+        else if (Model.EventPeriod == "all")
+        {
+            <span class="badge text-bg-info">
+                Все мероприятия
+            </span>
+        }
+        else
+        {
+            <span class="badge text-bg-success">
+                Будущие мероприятия
+            </span>
+        }
+
+        <span class="text-muted">
+            Найдено: @Model.TotalItems
+        </span>
+    </div>
+
+    <partial name="_EventListCards"
+             model="Model.Events" />
 
     @if (Model.TotalPages > 1)
     {
-        <nav class="pagination-wrapper" aria-label="Навигация по мероприятиям">
+        <nav class="pagination-wrapper"
+             aria-label="Навигация по мероприятиям">
             <ul class="pagination mb-0">
                 <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
                     <a class="page-link"
@@ -104,6 +187,7 @@
                        asp-route-searchQuery="@Model.SearchQuery"
                        asp-route-categoryId="@Model.CategoryId"
                        asp-route-eventDate="@eventDateValue"
+                       asp-route-eventPeriod="@Model.EventPeriod"
                        asp-route-sortOrder="@Model.SortOrder"
                        asp-route-page="@(Model.PageNumber - 1)">
                         Назад
@@ -120,6 +204,7 @@
                            asp-route-searchQuery="@Model.SearchQuery"
                            asp-route-categoryId="@Model.CategoryId"
                            asp-route-eventDate="@eventDateValue"
+                           asp-route-eventPeriod="@Model.EventPeriod"
                            asp-route-sortOrder="@Model.SortOrder"
                            asp-route-page="@i">
                             @i
@@ -135,6 +220,7 @@
                        asp-route-searchQuery="@Model.SearchQuery"
                        asp-route-categoryId="@Model.CategoryId"
                        asp-route-eventDate="@eventDateValue"
+                       asp-route-eventPeriod="@Model.EventPeriod"
                        asp-route-sortOrder="@Model.SortOrder"
                        asp-route-page="@(Model.PageNumber + 1)">
                         Вперед

@@ -14,6 +14,8 @@ namespace LocalMeet.Models.ViewModels.Events
 
         public string? SortOrder { get; set; }
 
+        public string EventPeriod { get; set; } = "upcoming";
+
         public IEnumerable<SelectListItem> Categories { get; set; } = new List<SelectListItem>();
 
         public int PageNumber { get; set; }

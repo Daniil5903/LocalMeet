@@ -12,12 +12,10 @@
     const returnUrl = chatRoot.dataset.returnUrl || window.location.pathname + window.location.search;
 
     const messagesContainer = document.getElementById("eventChatMessages");
+    const emptyState = document.getElementById("eventChatEmptyState");
     const chatForm = document.getElementById("eventChatForm");
     const chatInput = document.getElementById("eventChatInput");
-    const submitButton = document.getElementById("eventChatSubmitButton");
     const errorBox = document.getElementById("eventChatError");
-
-    let isSending = false;
 
     if (!eventId || !messagesContainer || !chatForm || !chatInput) {
         return;
@@ -29,6 +27,7 @@
         .build();
 
     connection.on("ReceiveMessage", function (message) {
+        showMessagesContainer();
         appendMessage(message);
         scrollChatToBottom();
     });
@@ -50,6 +49,7 @@
 
     chatForm.addEventListener("submit", function (event) {
         event.preventDefault();
+
         sendMessage();
     });
 
@@ -63,6 +63,7 @@
         }
 
         event.preventDefault();
+
         sendMessage();
     });
 
@@ -90,10 +91,6 @@
     });
 
     function sendMessage() {
-        if (isSending) {
-            return;
-        }
-
         const text = chatInput.value.trim();
 
         if (!text) {
@@ -107,19 +104,22 @@
         }
 
         hideError();
-        setSendingState(true);
 
         connection.invoke("SendMessage", eventId, text)
             .then(function () {
                 chatInput.value = "";
-                chatInput.focus();
             })
             .catch(function (error) {
                 showError(error.message || "Не удалось отправить сообщение");
-            })
-            .finally(function () {
-                setSendingState(false);
             });
+    }
+
+    function showMessagesContainer() {
+        messagesContainer.classList.remove("d-none");
+
+        if (emptyState) {
+            emptyState.remove();
+        }
     }
 
     function appendMessage(message) {
@@ -211,18 +211,11 @@
     }
 
     function scrollChatToBottom() {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-
-    function setSendingState(value) {
-        isSending = value;
-
-        if (submitButton) {
-            submitButton.disabled = value;
-            submitButton.textContent = value
-                ? "Отправка..."
-                : "Отправить";
+        if (messagesContainer.classList.contains("d-none")) {
+            return;
         }
+
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
     function showError(message) {

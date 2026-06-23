@@ -160,7 +160,29 @@
                          data-can-report-messages="@((Model.IsAuthenticated && !Model.IsAdmin).ToString().ToLowerInvariant())"
                          data-return-url="@returnUrl">
 
-                        <div id="eventChatMessages" class="event-chat-messages">
+                        @{
+                            var hasChatMessages = Model.ChatMessages.Any();
+                        }
+
+                        @if (!hasChatMessages)
+                        {
+                            <div id="eventChatEmptyState"
+                                 class="event-chat-empty-state">
+                                <div class="event-chat-empty-icon">
+                                    💬
+                                </div>
+
+                                <h3>Сообщений пока нет</h3>
+
+                                <p>
+                                    Здесь появятся сообщения участников мероприятия.
+                                    Напишите первое сообщение, чтобы начать обсуждение.
+                                </p>
+                            </div>
+                        }
+
+                        <div id="eventChatMessages"
+                             class="event-chat-messages @(hasChatMessages ? "" : "d-none")">
                             @foreach (var message in Model.ChatMessages)
                             {
                                 var authorAvatar = string.IsNullOrWhiteSpace(message.AuthorAvatarPath)

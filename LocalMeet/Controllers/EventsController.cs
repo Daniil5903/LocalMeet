@@ -28,10 +28,12 @@ namespace LocalMeet.Controllers
             string? searchQuery,
             int? categoryId,
             DateTime? eventDate,
+            string? eventPeriod,
             string? sortOrder,
             int page = 1)
         {
             const int pageSize = 6;
+
             page = Math.Max(page, 1);
 
             var currentUser = await _userManager.GetUserAsync(User);
@@ -48,6 +50,10 @@ namespace LocalMeet.Controllers
                 favoriteEventIds = favoriteIds.ToHashSet();
             }
 
+            var normalizedEventPeriod = NormalizeEventPeriod(eventPeriod);
+
+            var now = DateTime.Now;
+
             var query = _context.Events
                 .Include(e => e.Category)
                 .Include(e => e.Creator)
@@ -55,13 +61,21 @@ namespace LocalMeet.Controllers
                 .Where(e => e.Status == EventStatus.Approved)
                 .AsQueryable();
 
+            query = normalizedEventPeriod switch
+            {
+                "past" => query.Where(e => e.EventDate < now),
+                "all" => query,
+                _ => query.Where(e => e.EventDate >= now)
+            };
+
             if (!string.IsNullOrWhiteSpace(searchQuery))
             {
                 var normalizedQuery = searchQuery.Trim();
 
                 query = query.Where(e =>
                     e.Title.Contains(normalizedQuery) ||
-                    e.Description.Contains(normalizedQuery));
+                    e.Description.Contains(normalizedQuery) ||
+                    e.Address.Contains(normalizedQuery));
             }
 
             if (categoryId.HasValue)
@@ -83,10 +97,13 @@ namespace LocalMeet.Controllers
                 "created_desc" => query.OrderByDescending(e => e.CreatedAt),
                 "title" => query.OrderBy(e => e.Title),
                 "title_desc" => query.OrderByDescending(e => e.Title),
-                _ => query.OrderBy(e => e.EventDate)
+                _ => normalizedEventPeriod == "past"
+                    ? query.OrderByDescending(e => e.EventDate)
+                    : query.OrderBy(e => e.EventDate)
             };
 
             var totalItems = await query.CountAsync();
+
             var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
             if (totalPages > 0 && page > totalPages)
@@ -115,12 +132,17 @@ namespace LocalMeet.Controllers
                     Status = e.Status,
                     StatusText = GetStatusText(e.Status),
                     StatusCssClass = GetStatusCssClass(e.Status),
-                    CategoryName = e.Category != null ? e.Category.Name : "Без категории",
+                    CanViewStatus = false,
+                    CategoryName = e.Category != null
+                        ? e.Category.Name
+                        : "Без категории",
                     CreatorName = e.Creator != null
                         ? e.Creator.FirstName + " " + e.Creator.LastName
                         : "Неизвестный пользователь",
                     IsFavorite = favoriteEventIds.Contains(e.Id),
-                    CanToggleFavorite = currentUser != null && !currentUser.IsBlocked
+                    CanToggleFavorite =
+                        currentUser != null &&
+                        !currentUser.IsBlocked
                 })
                 .ToList();
 
@@ -130,6 +152,7 @@ namespace LocalMeet.Controllers
                 SearchQuery = searchQuery,
                 CategoryId = categoryId,
                 EventDate = eventDate,
+                EventPeriod = normalizedEventPeriod,
                 SortOrder = sortOrder,
                 PageNumber = page,
                 TotalPages = totalPages,
@@ -160,18 +183,31 @@ namespace LocalMeet.Controllers
             var currentUser = await _userManager.GetUserAsync(User);
 
             var isAuthenticated = currentUser != null;
-            var isAdmin = currentUser != null && await _userManager.IsInRoleAsync(currentUser, AppRole.Admin);
-            var isCreator = currentUser != null && eventEntity.CreatorId == currentUser.Id;
 
-            if (eventEntity.Status != EventStatus.Approved && !isCreator && !isAdmin)
+            var isAdmin =
+                currentUser != null &&
+                await _userManager.IsInRoleAsync(
+                    currentUser,
+                    AppRole.Admin);
+
+            var isCreator =
+                currentUser != null &&
+                eventEntity.CreatorId == currentUser.Id;
+
+            if (eventEntity.Status != EventStatus.Approved &&
+                !isCreator &&
+                !isAdmin)
             {
                 return Forbid();
             }
 
-            var isParticipant = currentUser != null &&
-                eventEntity.Participations.Any(p => p.UserId == currentUser.Id);
+            var isParticipant =
+                currentUser != null &&
+                eventEntity.Participations
+                    .Any(p => p.UserId == currentUser.Id);
 
-            var participantsCount = eventEntity.Participations.Count;
+            var participantsCount =
+                eventEntity.Participations.Count;
 
             var canJoin =
                 currentUser != null &&
@@ -188,9 +224,12 @@ namespace LocalMeet.Controllers
                 eventEntity.Status == EventStatus.Approved &&
                 eventEntity.EventDate > DateTime.Now;
 
-            var isFavorite = currentUser != null &&
+            var isFavorite =
+                currentUser != null &&
                 await _context.FavoriteEvents
-                    .AnyAsync(f => f.UserId == currentUser.Id && f.EventId == eventEntity.Id);
+                    .AnyAsync(f =>
+                        f.UserId == currentUser.Id &&
+                        f.EventId == eventEntity.Id);
 
             var canToggleFavorite =
                 currentUser != null &&
@@ -273,11 +312,12 @@ namespace LocalMeet.Controllers
                         Text = m.Text,
                         CreatedAt = m.CreatedAt,
                         IsDeleted = m.IsDeleted,
-                        CanReport = currentUser != null &&
-                                    !currentUser.IsBlocked &&
-                                    !isAdmin &&
-                                    !m.IsDeleted &&
-                                    m.UserId != currentUser.Id
+                        CanReport =
+                            currentUser != null &&
+                            !currentUser.IsBlocked &&
+                            !isAdmin &&
+                            !m.IsDeleted &&
+                            m.UserId != currentUser.Id
                     })
                     .ToList()
             };
@@ -289,16 +329,21 @@ namespace LocalMeet.Controllers
         [Authorize]
         public async Task<IActionResult> Create()
         {
-            var currentUser = await _userManager.GetUserAsync(User);
+            var currentUser =
+                await _userManager.GetUserAsync(User);
 
             if (currentUser == null)
             {
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction(
+                    "Login",
+                    "Account");
             }
 
             if (currentUser.IsBlocked)
             {
-                TempData["ErrorMessage"] = "Заблокированный пользователь не может создавать мероприятия";
+                TempData["ErrorMessage"] =
+                    "Заблокированный пользователь не может создавать мероприятия";
+
                 return RedirectToAction(nameof(Index));
             }
 
@@ -313,42 +358,59 @@ namespace LocalMeet.Controllers
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CreateEventViewModel model)
+        public async Task<IActionResult> Create(
+            CreateEventViewModel model)
         {
-            var currentUser = await _userManager.GetUserAsync(User);
+            var currentUser =
+                await _userManager.GetUserAsync(User);
 
             if (currentUser == null)
             {
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction(
+                    "Login",
+                    "Account");
             }
 
             if (currentUser.IsBlocked)
             {
-                TempData["ErrorMessage"] = "Заблокированный пользователь не может создавать мероприятия";
+                TempData["ErrorMessage"] =
+                    "Заблокированный пользователь не может создавать мероприятия";
+
                 return RedirectToAction(nameof(Index));
             }
 
             if (model.EventDate <= DateTime.Now)
             {
-                ModelState.AddModelError(nameof(model.EventDate), "Дата мероприятия должна быть позже текущего времени");
+                ModelState.AddModelError(
+                    nameof(model.EventDate),
+                    "Дата мероприятия должна быть позже текущего времени");
             }
 
-            var categoryExists = await _context.Categories
-                .AnyAsync(c => c.Id == model.CategoryId);
+            var categoryExists =
+                await _context.Categories
+                    .AnyAsync(c => c.Id == model.CategoryId);
 
             if (!categoryExists)
             {
-                ModelState.AddModelError(nameof(model.CategoryId), "Выбранная категория не найдена");
+                ModelState.AddModelError(
+                    nameof(model.CategoryId),
+                    "Выбранная категория не найдена");
             }
 
-            if (!model.Latitude.HasValue || !model.Longitude.HasValue)
+            if (!model.Latitude.HasValue ||
+                !model.Longitude.HasValue)
             {
-                ModelState.AddModelError(string.Empty, "Выберите место проведения мероприятия на карте");
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Выберите место проведения мероприятия на карте");
             }
 
             if (!ModelState.IsValid)
             {
-                model.Categories = await GetCategorySelectListAsync(model.CategoryId);
+                model.Categories =
+                    await GetCategorySelectListAsync(
+                        model.CategoryId);
+
                 return View(model);
             }
 
@@ -368,35 +430,51 @@ namespace LocalMeet.Controllers
             };
 
             _context.Events.Add(eventEntity);
+
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Мероприятие создано и отправлено на модерацию";
+            TempData["SuccessMessage"] =
+                "Мероприятие создано и отправлено на модерацию";
 
-            return RedirectToAction(nameof(Details), new { id = eventEntity.Id });
+            return RedirectToAction(
+                nameof(Details),
+                new
+                {
+                    id = eventEntity.Id
+                });
         }
 
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> Edit(int id)
         {
-            var eventEntity = await _context.Events
-                .Include(e => e.Category)
-                .FirstOrDefaultAsync(e => e.Id == id);
+            var eventEntity =
+                await _context.Events
+                    .Include(e => e.Category)
+                    .FirstOrDefaultAsync(e => e.Id == id);
 
             if (eventEntity == null)
             {
                 return NotFound();
             }
 
-            var currentUser = await _userManager.GetUserAsync(User);
+            var currentUser =
+                await _userManager.GetUserAsync(User);
 
             if (currentUser == null)
             {
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction(
+                    "Login",
+                    "Account");
             }
 
-            var isAdmin = await _userManager.IsInRoleAsync(currentUser, AppRole.Admin);
-            var isCreator = eventEntity.CreatorId == currentUser.Id;
+            var isAdmin =
+                await _userManager.IsInRoleAsync(
+                    currentUser,
+                    AppRole.Admin);
+
+            var isCreator =
+                eventEntity.CreatorId == currentUser.Id;
 
             if (!isCreator && !isAdmin)
             {
@@ -405,8 +483,15 @@ namespace LocalMeet.Controllers
 
             if (currentUser.IsBlocked && !isAdmin)
             {
-                TempData["ErrorMessage"] = "Заблокированный пользователь не может редактировать мероприятия";
-                return RedirectToAction(nameof(Details), new { id = eventEntity.Id });
+                TempData["ErrorMessage"] =
+                    "Заблокированный пользователь не может редактировать мероприятия";
+
+                return RedirectToAction(
+                    nameof(Details),
+                    new
+                    {
+                        id = eventEntity.Id
+                    });
             }
 
             var model = new EditEventViewModel
@@ -421,7 +506,9 @@ namespace LocalMeet.Controllers
                 MaxParticipants = eventEntity.MaxParticipants,
                 CategoryId = eventEntity.CategoryId,
                 Status = eventEntity.Status,
-                Categories = await GetCategorySelectListAsync(eventEntity.CategoryId)
+                Categories =
+                    await GetCategorySelectListAsync(
+                        eventEntity.CategoryId)
             };
 
             return View(model);
@@ -430,26 +517,36 @@ namespace LocalMeet.Controllers
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(EditEventViewModel model)
+        public async Task<IActionResult> Edit(
+            EditEventViewModel model)
         {
-            var eventEntity = await _context.Events
-                .Include(e => e.Participations)
-                .FirstOrDefaultAsync(e => e.Id == model.Id);
+            var eventEntity =
+                await _context.Events
+                    .Include(e => e.Participations)
+                    .FirstOrDefaultAsync(e => e.Id == model.Id);
 
             if (eventEntity == null)
             {
                 return NotFound();
             }
 
-            var currentUser = await _userManager.GetUserAsync(User);
+            var currentUser =
+                await _userManager.GetUserAsync(User);
 
             if (currentUser == null)
             {
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction(
+                    "Login",
+                    "Account");
             }
 
-            var isAdmin = await _userManager.IsInRoleAsync(currentUser, AppRole.Admin);
-            var isCreator = eventEntity.CreatorId == currentUser.Id;
+            var isAdmin =
+                await _userManager.IsInRoleAsync(
+                    currentUser,
+                    AppRole.Admin);
+
+            var isCreator =
+                eventEntity.CreatorId == currentUser.Id;
 
             if (!isCreator && !isAdmin)
             {
@@ -458,29 +555,45 @@ namespace LocalMeet.Controllers
 
             if (currentUser.IsBlocked && !isAdmin)
             {
-                TempData["ErrorMessage"] = "Заблокированный пользователь не может редактировать мероприятия";
-                return RedirectToAction(nameof(Details), new { id = eventEntity.Id });
+                TempData["ErrorMessage"] =
+                    "Заблокированный пользователь не может редактировать мероприятия";
+
+                return RedirectToAction(
+                    nameof(Details),
+                    new
+                    {
+                        id = eventEntity.Id
+                    });
             }
 
             if (model.EventDate <= DateTime.Now)
             {
-                ModelState.AddModelError(nameof(model.EventDate), "Дата мероприятия должна быть позже текущего времени");
+                ModelState.AddModelError(
+                    nameof(model.EventDate),
+                    "Дата мероприятия должна быть позже текущего времени");
             }
 
-            var categoryExists = await _context.Categories
-                .AnyAsync(c => c.Id == model.CategoryId);
+            var categoryExists =
+                await _context.Categories
+                    .AnyAsync(c => c.Id == model.CategoryId);
 
             if (!categoryExists)
             {
-                ModelState.AddModelError(nameof(model.CategoryId), "Выбранная категория не найдена");
+                ModelState.AddModelError(
+                    nameof(model.CategoryId),
+                    "Выбранная категория не найдена");
             }
 
-            if (!model.Latitude.HasValue || !model.Longitude.HasValue)
+            if (!model.Latitude.HasValue ||
+                !model.Longitude.HasValue)
             {
-                ModelState.AddModelError(string.Empty, "Выберите место проведения мероприятия на карте");
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Выберите место проведения мероприятия на карте");
             }
 
-            var participantsCount = eventEntity.Participations.Count;
+            var participantsCount =
+                eventEntity.Participations.Count;
 
             if (model.MaxParticipants < participantsCount)
             {
@@ -491,58 +604,96 @@ namespace LocalMeet.Controllers
 
             if (!ModelState.IsValid)
             {
-                model.Categories = await GetCategorySelectListAsync(model.CategoryId);
-                model.Status = eventEntity.Status;
+                model.Categories =
+                    await GetCategorySelectListAsync(
+                        model.CategoryId);
+
+                model.Status =
+                    eventEntity.Status;
+
                 return View(model);
             }
 
-            eventEntity.Title = model.Title.Trim();
-            eventEntity.Description = model.Description.Trim();
-            eventEntity.Address = model.Address.Trim();
-            eventEntity.Latitude = model.Latitude;
-            eventEntity.Longitude = model.Longitude;
-            eventEntity.EventDate = model.EventDate;
-            eventEntity.MaxParticipants = model.MaxParticipants;
-            eventEntity.CategoryId = model.CategoryId;
+            eventEntity.Title =
+                model.Title.Trim();
+
+            eventEntity.Description =
+                model.Description.Trim();
+
+            eventEntity.Address =
+                model.Address.Trim();
+
+            eventEntity.Latitude =
+                model.Latitude;
+
+            eventEntity.Longitude =
+                model.Longitude;
+
+            eventEntity.EventDate =
+                model.EventDate;
+
+            eventEntity.MaxParticipants =
+                model.MaxParticipants;
+
+            eventEntity.CategoryId =
+                model.CategoryId;
 
             if (!isAdmin)
             {
-                eventEntity.Status = EventStatus.Pending;
-                eventEntity.RejectReason = null;
+                eventEntity.Status =
+                    EventStatus.Pending;
+
+                eventEntity.RejectReason =
+                    null;
             }
 
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = isAdmin
-                ? "Мероприятие успешно обновлено"
-                : "Мероприятие обновлено и повторно отправлено на модерацию";
+            TempData["SuccessMessage"] =
+                isAdmin
+                    ? "Мероприятие успешно обновлено"
+                    : "Мероприятие обновлено и повторно отправлено на модерацию";
 
-            return RedirectToAction(nameof(Details), new { id = eventEntity.Id });
+            return RedirectToAction(
+                nameof(Details),
+                new
+                {
+                    id = eventEntity.Id
+                });
         }
 
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> Delete(int id)
         {
-            var eventEntity = await _context.Events
-                .Include(e => e.Category)
-                .Include(e => e.Participations)
-                .FirstOrDefaultAsync(e => e.Id == id);
+            var eventEntity =
+                await _context.Events
+                    .Include(e => e.Category)
+                    .Include(e => e.Participations)
+                    .FirstOrDefaultAsync(e => e.Id == id);
 
             if (eventEntity == null)
             {
                 return NotFound();
             }
 
-            var currentUser = await _userManager.GetUserAsync(User);
+            var currentUser =
+                await _userManager.GetUserAsync(User);
 
             if (currentUser == null)
             {
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction(
+                    "Login",
+                    "Account");
             }
 
-            var isAdmin = await _userManager.IsInRoleAsync(currentUser, AppRole.Admin);
-            var isCreator = eventEntity.CreatorId == currentUser.Id;
+            var isAdmin =
+                await _userManager.IsInRoleAsync(
+                    currentUser,
+                    AppRole.Admin);
+
+            var isCreator =
+                eventEntity.CreatorId == currentUser.Id;
 
             if (!isCreator && !isAdmin)
             {
@@ -553,12 +704,17 @@ namespace LocalMeet.Controllers
             {
                 Id = eventEntity.Id,
                 Title = eventEntity.Title,
-                CategoryName = eventEntity.Category?.Name ?? "Без категории",
+                CategoryName =
+                    eventEntity.Category?.Name ??
+                    "Без категории",
                 EventDate = eventEntity.EventDate,
-                ParticipantsCount = eventEntity.Participations.Count,
+                ParticipantsCount =
+                    eventEntity.Participations.Count,
                 Status = eventEntity.Status,
-                StatusText = GetStatusText(eventEntity.Status),
-                StatusCssClass = GetStatusCssClass(eventEntity.Status)
+                StatusText =
+                    GetStatusText(eventEntity.Status),
+                StatusCssClass =
+                    GetStatusCssClass(eventEntity.Status)
             };
 
             return View(model);
@@ -568,28 +724,38 @@ namespace LocalMeet.Controllers
         [Authorize]
         [ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(
+            int id)
         {
-            var eventEntity = await _context.Events
-                .Include(e => e.Participations)
-                .Include(e => e.FavoriteEvents)
-                .Include(e => e.Messages)
-                .FirstOrDefaultAsync(e => e.Id == id);
+            var eventEntity =
+                await _context.Events
+                    .Include(e => e.Participations)
+                    .Include(e => e.FavoriteEvents)
+                    .Include(e => e.Messages)
+                    .FirstOrDefaultAsync(e => e.Id == id);
 
             if (eventEntity == null)
             {
                 return NotFound();
             }
 
-            var currentUser = await _userManager.GetUserAsync(User);
+            var currentUser =
+                await _userManager.GetUserAsync(User);
 
             if (currentUser == null)
             {
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction(
+                    "Login",
+                    "Account");
             }
 
-            var isAdmin = await _userManager.IsInRoleAsync(currentUser, AppRole.Admin);
-            var isCreator = eventEntity.CreatorId == currentUser.Id;
+            var isAdmin =
+                await _userManager.IsInRoleAsync(
+                    currentUser,
+                    AppRole.Admin);
+
+            var isCreator =
+                eventEntity.CreatorId == currentUser.Id;
 
             if (!isCreator && !isAdmin)
             {
@@ -598,53 +764,99 @@ namespace LocalMeet.Controllers
 
             if (currentUser.IsBlocked && !isAdmin)
             {
-                TempData["ErrorMessage"] = "Заблокированный пользователь пользователь не может удалять мероприятия";
-                return RedirectToAction(nameof(Details), new { id = eventEntity.Id });
+                TempData["ErrorMessage"] =
+                    "Заблокированный пользователь не может удалять мероприятия";
+
+                return RedirectToAction(
+                    nameof(Details),
+                    new
+                    {
+                        id = eventEntity.Id
+                    });
             }
 
             if (eventEntity.Messages.Any())
             {
-                _context.EventMessages.RemoveRange(eventEntity.Messages);
+                _context.EventMessages.RemoveRange(
+                    eventEntity.Messages);
             }
 
             if (eventEntity.Participations.Any())
             {
-                _context.Participations.RemoveRange(eventEntity.Participations);
+                _context.Participations.RemoveRange(
+                    eventEntity.Participations);
             }
 
             if (eventEntity.FavoriteEvents.Any())
             {
-                _context.FavoriteEvents.RemoveRange(eventEntity.FavoriteEvents);
+                _context.FavoriteEvents.RemoveRange(
+                    eventEntity.FavoriteEvents);
             }
 
             _context.Events.Remove(eventEntity);
+
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Мероприятие успешно удалено";
+            TempData["SuccessMessage"] =
+                "Мероприятие успешно удалено";
 
             if (isAdmin)
             {
-                return RedirectToAction("Index", "Events", new { area = "Admin" });
+                return RedirectToAction(
+                    "Index",
+                    "Events",
+                    new
+                    {
+                        area = "Admin"
+                    });
             }
 
-            return RedirectToAction("Index", "MyEvents");
+            return RedirectToAction(
+                "Index",
+                "MyEvents");
         }
 
-        private async Task<IEnumerable<SelectListItem>> GetCategorySelectListAsync(int? selectedCategoryId = null)
+        private async Task<IEnumerable<SelectListItem>>
+            GetCategorySelectListAsync(
+                int? selectedCategoryId = null)
         {
-            var categories = await _context.Categories
-                .OrderBy(c => c.Name)
-                .ToListAsync();
+            var categories =
+                await _context.Categories
+                    .OrderBy(c => c.Name)
+                    .ToListAsync();
 
-            return categories.Select(c => new SelectListItem
-            {
-                Value = c.Id.ToString(),
-                Text = c.Name,
-                Selected = selectedCategoryId.HasValue && c.Id == selectedCategoryId.Value
-            });
+            return categories.Select(c =>
+                new SelectListItem
+                {
+                    Value = c.Id.ToString(),
+                    Text = c.Name,
+                    Selected =
+                        selectedCategoryId.HasValue &&
+                        c.Id == selectedCategoryId.Value
+                });
         }
 
-        private static string GetStatusText(EventStatus status)
+        private static string NormalizeEventPeriod(
+            string? eventPeriod)
+        {
+            if (string.IsNullOrWhiteSpace(eventPeriod))
+            {
+                return "upcoming";
+            }
+
+            var normalized =
+                eventPeriod.Trim().ToLowerInvariant();
+
+            return normalized switch
+            {
+                "past" => "past",
+                "all" => "all",
+                _ => "upcoming"
+            };
+        }
+
+        private static string GetStatusText(
+            EventStatus status)
         {
             return status switch
             {
@@ -657,16 +869,17 @@ namespace LocalMeet.Controllers
             };
         }
 
-        private static string GetStatusCssClass(EventStatus status)
+        private static string GetStatusCssClass(
+            EventStatus status)
         {
             return status switch
             {
-                EventStatus.Pending => "bg-warning text-dark",
-                EventStatus.Approved => "bg-success",
-                EventStatus.Rejected => "bg-danger",
-                EventStatus.Cancelled => "bg-secondary",
-                EventStatus.Completed => "bg-primary",
-                _ => "bg-light text-dark"
+                EventStatus.Pending => "text-bg-warning",
+                EventStatus.Approved => "text-bg-success",
+                EventStatus.Rejected => "text-bg-danger",
+                EventStatus.Cancelled => "text-bg-secondary",
+                EventStatus.Completed => "text-bg-info",
+                _ => "text-bg-light"
             };
         }
     }
